@@ -2,6 +2,8 @@
 
 Analysing trading strategies for s&p 500
 
+Runs seem to work well with monthly data
+
 ## Usage
 
 lein run
