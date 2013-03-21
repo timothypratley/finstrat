@@ -1,5 +1,6 @@
 (ns finstrat.main
-  (:use [finstrat.data]))
+  (:use [finstrat.data])
+  (:require [clj-time.core :as time]))
 
 ;; Run profits and cut losses (Momentum)
 ;; state machine start in waiting, if x up -> bought if x down -> waiting
@@ -35,7 +36,9 @@
 ;; TODO: plot them individual (to check validity)
 ;; and as a group (more fine grained see spikes and clumps to identify sweet spot)
 (defn -main [& m]
-  (let [prices (reverse (raw "^GSPC"))
+  (let [data (reverse (get-table "^GSPC"))
+        prices (map (partial (get "Adj Close")) data)
+        days (time/in-years (time/interval ((first data) "Date") ((last data) "Date")))
         state nil
         inflation 0.023
         tax 0.20
@@ -43,7 +46,7 @@
         ]
     (doseq [i [0.005 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.10]]
       (println "Compound interest " i ": "
-               (Math/pow (+ 1 (- (* i (- 1 tax)) inflation)) (/ (count prices) 12))))
+               (Math/pow (+ 1 (- (* i (- 1 tax)) inflation)) years)))
     (println "HELD FOR DURATION: "
              (* (/ (last prices) (first prices))
                 (- 1 tax)))
