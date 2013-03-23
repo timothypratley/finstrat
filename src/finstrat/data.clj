@@ -1,13 +1,13 @@
 (ns finstrat.data
   (:require [clj-http.client :as client]
-            [clj-time.core :as time])
+            [clj-time.coerce :as coerce])
   (:use ;[stockings.core]
         [clojure-csv.core]))
 
 (defn parse-date [date-string]
   (let [groups (.parse (com.joestelmach.natty.Parser.) date-string)]
     (if-not (empty? groups)
-      (time/from-date (first (.getDates (first groups)))))))
+      (coerce/from-date (first (.getDates (first groups)))))))
 
 (defn parse-number
   "Reads a number from a string. Returns nil if not a number."
