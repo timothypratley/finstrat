@@ -9,6 +9,7 @@ angular.module('charts', [])
 			title: "Performance",
 			vAxis: {title: "Value", minValue: 0},
 		    hAxis: {title: "Time"},
+            displayAnnotations: true,
 			areaOpacity: 0.0
 		}
     })
@@ -20,7 +21,7 @@ angular.module('charts', [])
 	        elem[0].innerHTML = "Loading " + o.title + "...";
 	        chart = new google.visualization[o.type](elem[0]);
 	    	query = function(url) {
-	    		$log.info("Quering " + url);
+	    		$log.info("Querying " + url);
                 $http.get(url)
                     .success(function (data) {
                         chart.draw(

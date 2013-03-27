@@ -42,3 +42,7 @@
      (include-js "/js/controllers.js")
      (include-js "/js/finstrat.js")]))
 
+(defpage "/chart" []
+  (html
+    [:div {:chart "performance"}]))
+
