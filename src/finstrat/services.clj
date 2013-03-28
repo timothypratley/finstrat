@@ -66,24 +66,31 @@
   [d]
   (/ (Math/round (* 100.0 d)) 100.0))
 
-(defpage "/json/foo/:symbols/:ts/:te/:tstep/:ds/:de/:dstep"
-  {:keys [symbols ts te tstep ds de dstep]}
+(defpage "/json/foo/:symbols/:ts/:te/:tc/:ds/:de/:dc"
+  {:keys [symbols ts te tc ds de dc]}
   (json
     ;clojure.string/split symobols
     (let [table (get-table symbols)
           tax 0.2
-          tolerances (map two-dec (apply range (map parse-number [ts te tstep])))
-          periods (map two-dec (apply range (map parse-number [ds de dstep])))]
+          ; TODO: must be a better way to get values
+          ts (parse-number ts)
+          te (parse-number te)
+          tc (parse-number tc)
+          ds (parse-number ds)
+          de (parse-number de)
+          dc (parse-number dc)
+          tolerances (range ts te (/ (- te ts) tc))
+          periods (range ds de (/ (- de ds) dc))]
       (for [tolerance tolerances]
         (for [period periods]
-          (let [final (reduce (partial step price-rising price-falling)
+          ((reduce (partial step price-rising price-falling)
                               ;(partial up period)
                               ;;(partial down period)
                               {:tax tax
                                :tolerance tolerance
                                :period period}
-                              table)]
-            [tolerance (final :value) period]))))))
+                              table)
+             :value))))))
 
 (defpage "/json/momentum/:symbol"
   {:keys [symbol]}

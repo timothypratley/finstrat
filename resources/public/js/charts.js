@@ -58,7 +58,7 @@ angular.module('charts', [])
             .start()
             .viewport({
               type: 'cartesian',
-              range: [[-3, 3], [-2, 2], [-1, 1]],
+              range: [[-3, 3], [-3, 3], [-3, 3]],
               scale: [1, 1, 1],
             })
             .camera({
@@ -100,6 +100,17 @@ angular.module('charts', [])
               axis: [0, 2],
               color: 0xc0c0c0,
               lineWidth: 1,
+            })
+            .surface({
+              id: "surface",
+              n: scope.n,
+              domain: scope.domain,
+              points: true,
+              line: false,
+              mesh: true,
+              doubleSided: true,
+              flipSided: false,
+              shaded: true   
             });
 
 	    	query = function(url) {
@@ -107,18 +118,9 @@ angular.module('charts', [])
                 $http.get(url)
                     .success(function (data) {
                         $log.info("got some data!");
-                        mathbox.surface({
-                            n: [11, 11],
-                            domain: [[0, 1], [0, 1]],
-                            data: data,
-                            points: true,
-                            line: false,
-                            mesh: true,
-                            doubleSided: true,
-                            flipSided: false,
-                            shaded: true   
+                        mathbox.animate("#surface", {
+                            expression: function(x, y, i, j) { return data[i][j]; }
                         });
-                        //mathbox.draw(data, o);
                     })
                     .error(function (data, status) {
                         $log.error(status);
