@@ -3,6 +3,7 @@ angular.module('finstrat', ['charts'])
         $routeProvider
 	    .when("/about", {templateUrl: "about", controller: AboutCtrl})
 	    .when("/chart", {templateUrl: "chart", controller: ChartCtrl})
+	    .when("/mathbox", {templateUrl: "mathbox", controller: MathboxCtrl})
 	    .otherwise({redirectTo: "/about"});
     });
 
@@ -10,11 +11,19 @@ function AboutCtrl () {}
 function ChartCtrl ($scope) {
     $scope.url = "/json/foo/F";
 }
+function MathboxCtrl ($scope) {
+    $scope.url = "/json/foo/F/0/1/0.1/0/1/0.1";
+}
 
-// note that charts relies on this, can I put it in there?
+// TODO: charts.js relies on these dependencies - move these except angular
 google.load('visualization', '1',
         {'packages':['corechart', 'table', 'annotatedtimeline']});
 google.setOnLoadCallback(function() {
-   angular.bootstrap(document.body, ['finstrat']);
+    angular.bootstrap(document.body, ['finstrat']);
+    ThreeBox.preload(
+        ['/html/MathBox.glsl.html'],
+        function () { 
+            // do stuff with mathbox here
+        });
 });
 

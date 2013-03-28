@@ -4,7 +4,8 @@
             [clj-time.format :as format]
             [clj-time.core :as time])
   (:use [finstrat.data]
-        ;[finstrat.core]
+        [finstrat.core]
+        [finstrat.momentum]
         ;[clojure.data.csv :only [write-csv]]
         [noir.core]
         [noir.response :only [redirect content-type status]]
@@ -60,22 +61,33 @@
     [:headers "Content-Disposition"]
     (str "attachment;filename=" filename ".csv")))
 
+;; TODO: this is really aweful, trying to avoid floating point precision
+(defn two-dec
+  [d]
+  (/ (Math/round (* 100.0 d)) 100.0))
+
 (defpage "/json/foo/:symbols/:ts/:te/:tstep/:ds/:de/:dstep"
   {:keys [symbols ts te tstep ds de dstep]}
-  ;clojure.string/split symobols
-  (let [table (get-table symbols)
-        tolerances (range ts te tstep)
-        days (range ds de dstep)]
-  (json table)))
-   ; (reduce (partial step tax tol (partial up d) (partial down d))
-    ;            table))))
+  (json
+    ;clojure.string/split symobols
+    (let [table (get-table symbols)
+          tax 0.2
+          tolerances (map two-dec (apply range (map parse-number [ts te tstep])))
+          periods (map two-dec (apply range (map parse-number [ds de dstep])))]
+      (for [tolerance tolerances]
+        (for [period periods]
+          (let [final (reduce (partial step price-rising price-falling)
+                              ;(partial up period)
+                              ;;(partial down period)
+                              {:tax tax
+                               :tolerance tolerance
+                               :period period}
+                              table)]
+            [tolerance (final :value) period]))))))
 
 (defpage "/json/momentum/:symbol"
   {:keys [symbol]}
   (let [table (get-table symbol)
-        step identity ;TODO
-        price-rising identity
-        price-falling identity
         states (reductions (partial step 0.2 0.1 price-rising price-falling)
                            table)
         header ()

@@ -37,5 +37,95 @@ angular.module('charts', [])
 	        }
             scope.$watch("url", query, true);
 	    };
+	})
+    .directive('mathbox', function(options, $log, $http) {
+	    return function(scope, elem, attrs) {
+	        var mathbox, query, o = {};
+	    	$.extend(o, options.general);
+	    	$.extend(o, options[attrs.chart]);
+	        elem[0].innerHTML = "Loading " + o.title + "...";
+
+            mathbox = mathBox(elem[0], {
+              cameraControls: true,
+              cursor:         true,
+              controlClass:   ThreeBox.OrbitControls,
+              elementResize:  true,
+              fullscreen:     true,
+              screenshot:     true,
+              stats:          false,
+              scale:          1,
+            })
+            .start()
+            .viewport({
+              type: 'cartesian',
+              range: [[-3, 3], [-2, 2], [-1, 1]],
+              scale: [1, 1, 1],
+            })
+            .camera({
+              orbit: 3.5,
+              phi: Math.PI/3,
+              theta: 0.3,
+            })
+            .transition(300)
+            .axis({
+              id: 'a',
+              axis: 0,
+              color: 0xa0a0a0,
+              ticks: 5,
+              lineWidth: 2,
+              size: .05,
+              labels: true,
+            })
+            .axis({
+              id: 'b',
+              axis: 1,
+              color: 0xa0a0a0,
+              ticks: 5,
+              lineWidth: 2,
+              size: .05,
+              zero: false,
+              labels: true,
+            })
+            .axis({
+              id: 'c',
+              axis: 2,
+              color: 0xa0a0a0,
+              ticks: 5,
+              lineWidth: 2,
+              size: .05,
+              zero: false,
+              labels: true,
+            })
+            .grid({
+              axis: [0, 2],
+              color: 0xc0c0c0,
+              lineWidth: 1,
+            });
+
+	    	query = function(url) {
+	    		$log.info("Querying " + url);
+                $http.get(url)
+                    .success(function (data) {
+                        $log.info("got some data!");
+                        mathbox.surface({
+                            n: [11, 11],
+                            domain: [[0, 1], [0, 1]],
+                            data: data,
+                            points: true,
+                            line: false,
+                            mesh: true,
+                            doubleSided: true,
+                            flipSided: false,
+                            shaded: true   
+                        });
+                        //mathbox.draw(data, o);
+                    })
+                    .error(function (data, status) {
+                        $log.error(status);
+                        //mathbox.addErrorFromQueryResponse(elem[0], data);
+                    });
+	        }
+            scope.$watch("url", query, true);
+	    };
 	});
 

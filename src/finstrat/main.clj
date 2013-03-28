@@ -1,6 +1,7 @@
 (ns finstrat.main
   (:use [finstrat.core]
-        [finstrat.data])
+        [finstrat.data]
+        [finstrat.momentum])
   (:require [clj-time.core :as time]))
 
 ;; Run profits and cut losses (Momentum)
@@ -14,11 +15,11 @@
 ;; and as a group (more fine grained see spikes and clumps to identify sweet spot)
 (defn -main [& m]
   (let [table (reverse (get-table "^GSPC"))
-        prices (map #(% "Adj Close") data)
+        prices (map #(% "Adj Close") table)
         ;TODO: avoid truncation
         years (time/in-years (time/interval
-                               ((first data) "Date")
-                               ((last data) "Date")))
+                               ((first table) "Date")
+                               ((last table) "Date")))
         inflation 0.023
         tax 0.20
         first-price ((first table) "Adj Close")

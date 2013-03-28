@@ -35,7 +35,7 @@
 (defn update
   [state datum]
   (-> state
-    (assoc [:value] (+ (state :cash) (* (state :units) state :cost)))
+    (assoc [:value] (+ (state :cash) (* (state :units) (datum "Adj Close"))))
     (update-in [:low] (partial min (datum "Adj Close")))
     (update-in [:high] (partial max (datum "Adj Close")))))
 
@@ -45,6 +45,7 @@
     :name :holding
     :low (datum "Adj Close")
     :high (datum "Adj Close")
+    :value (state :cash)
     :cash 0
     :units (/ (state :cash) (datum "Adj Close"))
     :cost (state :cash)))
@@ -58,6 +59,7 @@
       :name :waiting
       :low (datum "Adj Close")
       :high (datum "Adj Close")
+      :value (+ (state :cash) proceeds)
       :cash (+ (state :cash) proceeds)
       :units 0)))
 

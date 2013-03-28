@@ -31,6 +31,8 @@
         [:li (link-to "/#/" "Home")]
         [:li.divider-vertical]
         [:li (link-to "/#/chart" "Chart")]
+        [:li.divider-vertical]
+        [:li (link-to "/#/mathbox" "Mathbox")]
         [:li.divider-vertical]]]]
 
       [:div#content.ng-view "Loading..."]
@@ -38,11 +40,18 @@
      (include-js "//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/js/bootstrap.min.js")
      (include-js "//ajax.googleapis.com/ajax/libs/angularjs/1.0.2/angular.min.js")
      (include-js "https://www.google.com/jsapi")
+     (include-js "/js/MathBox-bundle.min.js")
      (include-js "/js/charts.js")
-     (include-js "/js/controllers.js")
      (include-js "/js/finstrat.js")]))
 
 (defpage "/chart" []
   (html
     [:div {:chart "performance"}]))
 
+(defpage "/mathbox" []
+  (html
+    [:div {:mathbox "performance"}]))
+
+(defpage "/about" []
+  (html
+    [:div "Todo"]))
