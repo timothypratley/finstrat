@@ -3,9 +3,8 @@
             [noir.session :as session]
             [clj-time.format :as format]
             [clj-time.core :as time])
-  (:use [finstrat.data]
-        [finstrat.core]
-        [finstrat.momentum]
+  (:use [finstrat.simulations]
+        [finstrat.helpers]
         ;[clojure.data.csv :only [write-csv]]
         [noir.core]
         [noir.response :only [redirect content-type status]]
@@ -26,7 +25,9 @@
 (defn tostr-ds-date
   "converts a joda time into a json data source date"
   [date]
-  (str "Date(" (time/year date) "," (dec (time/month date)) "," (time/day date) ")"))
+  (str "Date("
+       (clojure.string/join
+         "," (time/year date) (dec (time/month date)) (time/day date) ")")))
 
 ;; TODO: add as encoder instead?
 (defn fmt
@@ -61,45 +62,36 @@
     [:headers "Content-Disposition"]
     (str "attachment;filename=" filename ".csv")))
 
-;; TODO: this is really aweful, trying to avoid floating point precision
-(defn two-dec
-  [d]
-  (/ (Math/round (* 100.0 d)) 100.0))
+(comment defpage "/json/foo/:a/:b/:c"
+  m
+  (let [m (update-many [parse-number :a :b :c])]
+    (apply dosomething (map m [:a :b :c]))))
 
-(defpage "/json/foo/:symbols/:ts/:te/:tc/:ds/:de/:dc"
-  {:keys [symbols ts te tc ds de dc]}
+(comment defservice "/json/foo"
+  [a :number (compliment nil?) "must be a number"
+   b :number (partial > 5) "must be a number less than 5"
+   c :date (compliment nil?) "must be a date"]
+  (dosomething a b c))
+
+;TODO: why so slow for big numbers?
+(defpage "/sim/:sim/:symbols/:xstart/:xend/:xcount/:ystart/:yend/:ycount/:tstart/:tend/:tcount"
+  {:keys [sim symbols xstart xend xcount ystart yend ycount tstart tend tcount]}
   (json
-    ;clojure.string/split symobols
-    (let [table (get-table symbols)
-          tax 0.2
-          ; TODO: must be a better way to get values
-          ts (parse-number ts)
-          te (parse-number te)
-          tc (parse-number tc)
-          ds (parse-number ds)
-          de (parse-number de)
-          dc (parse-number dc)
-          tolerances (range ts te (/ (- te ts) tc))
-          periods (range ds de (/ (- de ds) dc))]
-      (for [tolerance tolerances]
-        (for [period periods]
-          ((reduce (partial step price-rising price-falling)
-                              ;(partial up period)
-                              ;;(partial down period)
-                              {:tax tax
-                               :tolerance tolerance
-                               :period period}
-                              table)
-             :value))))))
+    ;clojure.string/split symbols
+    (let [xs (apply rangef (map parse-number [xstart xend xcount]))
+          ys (apply rangef (map parse-number [ystart yend ycount]))
+          ts (apply rangef (map parse-number [tstart tend tcount]))]
+      (for [x xs]
+        (for [y ys]
+          (for [t ts]
+            (:value (simulate reduce sim symbols x y t))))))))
 
-(defpage "/json/momentum/:symbol"
-  {:keys [symbol]}
-  (let [table (get-table symbol)
-        states (reductions (partial step 0.2 0.1 price-rising price-falling)
-                           table)
-        header ()
-        tabulate (fn [state] (map fmt (map state [:date :price :value :note])))
-        result (map tabulate states)]
-    (json (cons header result))))
-
+(defpage "/sim/:sim/:symbols/:x/:y/:t"
+  {:keys [sim symbols x y t]}
+  (json
+    (let [states (simulate reductions sim symbols x y t)
+          header ()
+          tabulate (fn [state] (map fmt (map state [:date :price :value :note])))
+          result (map tabulate states)]
+      (cons header result))))
 

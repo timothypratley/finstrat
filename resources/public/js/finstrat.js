@@ -9,14 +9,25 @@ angular.module('finstrat', ['charts'])
 
 function AboutCtrl () {}
 function ChartCtrl ($scope) {
-    $scope.url = "/json/foo/F";
+    $scope.url = "/sim/momentum/F";
 }
 function MathboxCtrl ($scope) {
-    $scope.domain = [[0, 1], [0, 1]];
-    $scope.n = [11, 11];
-    $scope.url = "/json/foo/F/"
-        + $scope.domain[0][0] + "/" + $scope.domain[0][1] + "/" + $scope.n[0] + "/"
-        + $scope.domain[1][0] + "/" + $scope.domain[1][1] + "/" + $scope.n[1];
+    $scope.symbol = "^GSPC";
+    $scope.domain = [[0, 2], [0, 2], [0, 2]];
+    $scope.n = [11, 11, 1];
+    $scope.submit = function () {
+        $scope.url = "/sim/momentum/" + $scope.symbol + "/"
+            + $scope.domain[0][0] + "/"
+            + $scope.domain[0][1] + "/"
+            + $scope.n[0] + "/"
+            + $scope.domain[1][0] + "/"
+            + $scope.domain[1][1] + "/"
+            + $scope.n[1] + "/"
+            + $scope.domain[2][0] + "/"
+            + $scope.domain[2][1] + "/"
+            + $scope.n[2];
+    };
+    $scope.submit();
 }
 
 // TODO: charts.js relies on these dependencies - move these except angular

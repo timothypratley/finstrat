@@ -1,19 +1,8 @@
 (ns finstrat.data
-  (:require [clj-http.client :as client]
-            [clj-time.coerce :as coerce])
-  (:use ;[stockings.core]
+  (:require [clj-http.client :as client])
+  (:use [finstrat.helpers]
+        ;[stockings.core]
         [clojure-csv.core]))
-
-(defn parse-date [date-string]
-  (let [groups (.parse (com.joestelmach.natty.Parser.) date-string)]
-    (if-not (empty? groups)
-      (coerce/from-date (first (.getDates (first groups)))))))
-
-(defn parse-number
-  "Reads a number from a string. Returns nil if not a number."
-  [s]
-  (if (re-find #"^-?\d+\.?\d*([Ee]\+\d+|[Ee]-\d+|[Ee]\d+)?$" (.trim s))
-    (read-string s)))
 
 (defn bind-columns
   [header row]
@@ -22,9 +11,10 @@
 
 (defn bind
   [csv]
-  (let [header (first csv)
+  ;; TODO: Yes this is very slow (but cached) - reflecting
+  (time (doall (let [header (first csv)
         data (rest csv)]
-    (map (partial bind-columns header) data)))
+    (map (partial bind-columns header) data)))))
 
 (defn get-table
   [symbol]
@@ -34,6 +24,8 @@
                                         :ignore ".csv"}})
         csv (parse-csv (response :body))]
     (bind csv)))
+;; caching for testing purposes, you will need to restart every day :)
+(def get-table (memoize get-table))
 
 (defn realsap
   []

@@ -8,6 +8,7 @@
                  [com.joestelmach/natty "0.6-SNAPSHOT"]
                  [clojure-csv/clojure-csv "2.0.0-alpha2"]]
   :dev-dependencies [[lein-ring "0.7.5"]]
+  :warn-on-reflection true
   :ring {:handler finstrat.server/handler}
   :main finstrat.server)
 

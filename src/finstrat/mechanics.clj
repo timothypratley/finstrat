@@ -1,10 +1,11 @@
-(ns finstrat.core)
+(ns finstrat.mechanics)
 
 (declare init buy sell update)
 
 (defn step
   [buy-signal sell-signal state datum]
   (comment DEBUG println "STEP: " state datum)
+  ;TODO: simplify
   (cond
     (nil? (state :name))
     (init state datum)
@@ -26,6 +27,8 @@
   [state datum]
   (assoc state
     :name :waiting
+         ;; TODO: these don't belong anymore
+         ;; they should go in the signal itself
     :high (datum "Adj Close")
     :low (datum "Adj Close")
     :cash 1
@@ -34,10 +37,11 @@
 
 (defn update
   [state datum]
-  (-> state
-    (assoc [:value] (+ (state :cash) (* (state :units) (datum "Adj Close"))))
-    (update-in [:low] (partial min (datum "Adj Close")))
-    (update-in [:high] (partial max (datum "Adj Close")))))
+  (assoc state
+         ;; TODO: move to the signal
+    :low (min (state :low) (datum "Adj Close"))
+    :high (max (state :high) (datum "Adj Close"))
+    :value (+ (state :cash) (* (state :units) (datum "Adj Close")))))
 
 (defn buy
   [state datum]

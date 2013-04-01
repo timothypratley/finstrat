@@ -1,4 +1,4 @@
-body {
-  padding: 60px;
-}
+body { padding: 60px; }
+label { float: left; }
+input { width: 60px; }
 
