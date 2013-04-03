@@ -43,3 +43,20 @@
   (if (re-find #"^-?\d+\.?\d*([Ee]\+\d+|[Ee]-\d+|[Ee]\d+)?$" (.trim s))
     (read-string s)))
 
+(defn- update-keys
+  [m [f & kvs]]
+  (reduce (fn [m kv] (update-in m kv f))
+          m
+          kvs))
+
+(defn update-many
+  "Returns hashmap m with values updated
+   by a sequence of [function & keylists]
+   (update-many m [f [:c :x]])
+   is equivalent to (update-in m [:c :x] f)
+   but you can include multiple expressions:
+   (update-many m [f [:a] [:c :x]]
+                  [g [:b :y] [:d]])"
+  [m & more]
+  (reduce update-keys m more))
+

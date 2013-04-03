@@ -12,6 +12,7 @@
 (defn bind
   [csv]
   ;; TODO: Yes this is very slow (but cached) - reflecting
+  ;; TODO: does doall make any difference?
   (time (doall (let [header (first csv)
         data (rest csv)]
     (map (partial bind-columns header) data)))))

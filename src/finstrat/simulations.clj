@@ -1,34 +1,30 @@
 (ns finstrat.simulations
+  (:require [clj-time.core :as t])
   (:use [finstrat.data]
         [finstrat.mechanics]
         [finstrat.momentum]
         [finstrat.fundamentals]))
 
-(declare momentum pe)
+(def sims {"momentum" momentum})
 
 (defn simulate
-  [r sim symbol & args]
-  (let [table (get-table symbol)
-        f (condp (partial = sim)
-            "PE" pe
-            "momentum" momentum)]
-    (r (apply f table args)
+  [sim symbols & args]
+  ;; TODO: combine tables in a more sensible way
+  (let [table (apply map merge (map get-table symbols))
+        f (sims sim)]
+    ;; TODO: buy/sell in response to :weight
+    (reductions (apply partial f args)
        {:tax 0.2}
        table)))
 
-(defn momentum
-  [table tolerance period t]
-  (fn [state datum] 
-      (step (partial price-rising tolerance period)
-            ;TODO: this is asymetric just for testing...
-            ;so we can use 2 dimensions
-            (partial price-falling period tolerance)
-            state
-            datum)))
-
-(defn pe
-  [table entry exit t]
-  (partial step
-           #(< (% "PE") entry)
-           #(> (% "PE") exit)))
+(defn simulated-apr
+  [sim symbols & args]
+  (let [result (apply simulate sim symbols args)
+        initial (first result)
+        final (last result)
+        days (t/in-days (t/interval
+                          (initial :date)
+                          (final :date)))
+        years (/ days 365.242)]
+    (Math/pow (final :value) (/ 1 years))))
 

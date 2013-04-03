@@ -35,20 +35,17 @@
     :units 0
     :cost 0))
 
+;TODO run this always and simplify b/s
 (defn update
   [state datum]
   (assoc state
-         ;; TODO: move to the signal
-    :low (min (state :low) (datum "Adj Close"))
-    :high (max (state :high) (datum "Adj Close"))
+    :date (datum "Date")
     :value (+ (state :cash) (* (state :units) (datum "Adj Close")))))
 
 (defn buy
   [state datum]
   (assoc state
     :name :holding
-    :low (datum "Adj Close")
-    :high (datum "Adj Close")
     :value (state :cash)
     :cash 0
     :units (/ (state :cash) (datum "Adj Close"))
@@ -61,8 +58,6 @@
         proceeds (- proceeds (* profit (state :tax)))]
     (assoc state
       :name :waiting
-      :low (datum "Adj Close")
-      :high (datum "Adj Close")
       :value (+ (state :cash) proceeds)
       :cash (+ (state :cash) proceeds)
       :units 0)))

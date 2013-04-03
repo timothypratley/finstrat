@@ -30,15 +30,16 @@ function MathboxCtrl ($scope) {
     $scope.submit();
 }
 
+DomReady.ready(function() {
+  ThreeBox.preload(
+      ['/html/MathBox.glsl.html'],
+      function(){});
+});
+
 // TODO: charts.js relies on these dependencies - move these except angular
 google.load('visualization', '1',
         {'packages':['corechart', 'table', 'annotatedtimeline']});
 google.setOnLoadCallback(function() {
     angular.bootstrap(document.body, ['finstrat']);
-    ThreeBox.preload(
-        ['/html/MathBox.glsl.html'],
-        function () { 
-            // do stuff with mathbox here
-        });
 });
 

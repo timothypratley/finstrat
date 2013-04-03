@@ -1,6 +1,5 @@
 (ns finstrat.main
-  (:use [finstrat.core]
-        [finstrat.data]
+  (:use [finstrat.data]
         [finstrat.momentum])
   (:require [clj-time.core :as time]))
 
@@ -37,7 +36,7 @@
     (doseq [tolerance [0.005 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.10 0.2 0.3 0.5]]
       (let [state {:tax tax
                    :tolerance tolerance}
-            result (reduce (partial step price-rising price-falling)
+            result (reduce identity
                            state table)]
         (println "POSITIVE " tolerance ": "
                    (+ (result :cash)
@@ -45,7 +44,7 @@
     (doseq [tolerance [0.005 0.01 0.02 0.03 0.04 0.05 0.06 0.07 0.08 0.09 0.10]]
       (let [state {:tax tax
                    :tolerance tolerance}
-            result (reduce (partial step price-falling price-rising)
+            result (reduce identity
                            state prices)]
         (println "NEGATIVE " tolerance ": "
                    (+ (result :cash)

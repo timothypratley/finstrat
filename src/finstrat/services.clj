@@ -74,24 +74,34 @@
   (dosomething a b c))
 
 ;TODO: why so slow for big numbers?
-(defpage "/sim/:sim/:symbols/:xstart/:xend/:xcount/:ystart/:yend/:ycount/:tstart/:tend/:tcount"
-  {:keys [sim symbols xstart xend xcount ystart yend ycount tstart tend tcount]}
+(defpage "/sim/:sim/:symbols/:astart/:aend/:acount/:bstart/:bend/:bcount/:cstart/:cend/:ccount"
+  {:keys [sim symbols
+          astart aend acount
+          bstart bend bcount
+          cstart cend ccount]}
   (json
-    ;clojure.string/split symbols
-    (let [xs (apply rangef (map parse-number [xstart xend xcount]))
-          ys (apply rangef (map parse-number [ystart yend ycount]))
-          ts (apply rangef (map parse-number [tstart tend tcount]))]
-      (for [x xs]
-        (for [y ys]
-          (for [t ts]
-            (:value (simulate reduce sim symbols x y t))))))))
+    (let [symbols (clojure.string/split symbols #",")
+          as (apply rangef (map parse-number
+                                [astart aend acount]))
+          bs (apply rangef (map parse-number
+                                [bstart bend bcount]))
+          cs (apply rangef (map parse-number
+                                [cstart cend ccount]))]
+      (for [a as]
+        (for [b bs]
+          (for [c cs]
+            (simulated-apr sim symbols a b c)))))))
 
-(defpage "/sim/:sim/:symbols/:x/:y/:t"
-  {:keys [sim symbols x y t]}
+(defpage "/sim/:sim/:symbols/:a/:b/:c"
+  {:keys [sim symbols a b c]}
   (json
-    (let [states (simulate reductions sim symbols x y t)
+    (let [symbols (clojure.string/split symbols #",")
+          states (simulate sim symbols a b c)
           header ()
-          tabulate (fn [state] (map fmt (map state [:date :price :value :note])))
+          tabulate (fn [state]
+                     (map fmt
+                          (map state
+                               [:date :price :value :note])))
           result (map tabulate states)]
       (cons header result))))
 
