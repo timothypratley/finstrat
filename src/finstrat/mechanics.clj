@@ -1,64 +1,39 @@
 (ns finstrat.mechanics)
 
-(declare init buy sell update)
-
-(defn step
-  [buy-signal sell-signal state datum]
-  (comment DEBUG println "STEP: " state datum)
-  ;TODO: simplify
-  (cond
-    (nil? (state :name))
-    (init state datum)
-
-    (= (state :name) :waiting)
-    (if (buy-signal state datum)
-      (buy state datum)
-      (update state datum))
-
-    (= (state :name) :holding)
-    (if (sell-signal state datum)
-      (sell state datum)
-      (update state datum))
-
-    :else
-      (throw (Exception. "Invalid state name"))))
-
-(defn init
+(defn- init
   [state datum]
   (assoc state
-    :name :waiting
-         ;; TODO: these don't belong anymore
-         ;; they should go in the signal itself
-    :high (datum "Adj Close")
-    :low (datum "Adj Close")
+    :weight 0  ;;;; TODO: should not set this here??
     :cash 1
     :units 0
     :cost 0))
 
-;TODO run this always and simplify b/s
-(defn update
+(defn- buy
   [state datum]
   (assoc state
-    :date (datum "Date")
-    :value (+ (state :cash) (* (state :units) (datum "Adj Close")))))
-
-(defn buy
-  [state datum]
-  (assoc state
-    :name :holding
-    :value (state :cash)
     :cash 0
-    :units (/ (state :cash) (datum "Adj Close"))
-    :cost (state :cash)))
+    :units (+ (state :units) (/ (state :cash) (datum :price)))
+    :cost (+ (state :cost) (state :cash))))
 
-(defn sell
+(defn- sell
   [state datum]
-  (let [proceeds (* (datum "Adj Close") (state :units))
+  (let [proceeds (* (datum :price) (state :units))
         profit (- proceeds (state :cost))
         proceeds (- proceeds (* profit (state :tax)))]
     (assoc state
-      :name :waiting
-      :value (+ (state :cash) proceeds)
       :cash (+ (state :cash) proceeds)
-      :units 0)))
+      :units 0
+      :cost 0)))
+
+
+(defn update
+  [state datum]
+  (let [state (if (not (state :weight)) (init state datum))
+        state (cond (pos? (state :weight)) (buy state datum)
+                    (neg? (state :weight)) (sell state datum)
+                    :else state)]
+    (assoc state
+           :date (datum :date)
+           :value (+ (state :cash)
+                     (* (state :units) (datum :price))))))
 

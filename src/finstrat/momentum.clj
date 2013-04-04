@@ -12,12 +12,19 @@
         cut (and falling (not (neg? weight)))]
     (cond
       run (assoc local
+                 ;; TODO: should not have to copy like this
+                 :date (local "Date")
+                 :price p
                  :high p
                  :weight 1)
       cut (assoc local
+                 :date (local "Date")
+                 :price p
                  :low p
                  :weight -1)
       :else (assoc local
+                   :date (local "Date")
+                   :price p
                    :low (min low p)
                    :high (max high p)))))
 
