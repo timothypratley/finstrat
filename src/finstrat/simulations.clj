@@ -40,7 +40,7 @@
           weights (calc-weights fs table args)]
       (assert (not-any? nil? (map :weight weights))
               "invalid weight calculated")
-      (reductions update weights))))
+      (rest (reductions update {:tax 0.2} weights)))))
 
 (defn simulate-apy
   "Calculate the annual percentage yeild for a simulation."
@@ -51,9 +51,8 @@
         _ (println initial)
         _ (println final)
         days (t/in-days (t/interval
-                          ; TODO fix asymetry due to partial state updates
-                          (initial "Date")
+                          (initial :date)
                           (final :date)))
         years (/ days 365.242)]
-    (Math/pow (final :value) (/ 1 years))))
+    (* 100 (- (Math/pow (final :value) (/ 1 years)) 1))))
 

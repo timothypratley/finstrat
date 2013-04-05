@@ -33,11 +33,12 @@
 (defn update
   [state datum]
   (let [state (if (not (state :cash)) (init state datum) state)
-        _ (assert state (str state))
-        state (cond (pos? (state :weight)) (buy state datum)
-                    (neg? (state :weight)) (sell state datum)
+        state (cond (pos? (datum :weight)) (buy state datum)
+                    (neg? (datum :weight)) (sell state datum)
                     :else state)]
     (assoc state
+           ;TODO: better way don't carry?
+           "Adj Close" (datum "Adj Close")
            :date (datum "Date")
            :value (+ (state :cash)
                      (* (state :units) (datum "Adj Close"))))))
