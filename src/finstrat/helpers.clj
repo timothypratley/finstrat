@@ -35,11 +35,11 @@
 (defn parse-date [date-string]
   (let [groups (.parse (com.joestelmach.natty.Parser.) date-string)]
     (if-not (empty? groups)
-      (coerce/from-date (first (.getDates (first groups)))))))
+      (coerce/from-date (first (.getDates ^com.joestelmach.natty.DateGroup (first groups)))))))
 
 (defn parse-number
   "Reads a number from a string. Returns nil if not a number."
-  [s]
+  [^String s]
   (if (re-find #"^-?\d+\.?\d*([Ee]\+\d+|[Ee]-\d+|[Ee]\d+)?$" (.trim s))
     (read-string s)))
 

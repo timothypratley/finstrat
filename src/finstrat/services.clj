@@ -19,7 +19,7 @@
                     date))
 
 (custom/add-encoder org.joda.time.DateTime
-  (fn [d jsonGenerator]
+  (fn [d ^com.fasterxml.jackson.core.JsonGenerator jsonGenerator]
     (.writeString jsonGenerator (readable-date d))))
 
 (defn tostr-ds-date
@@ -90,13 +90,14 @@
       (for [a as]
         (for [b bs]
           (for [c cs]
-            (simulated-apr sim symbols a b c)))))))
+            ;; TODO: match sim with symbols
+            (simulate-apy (cons sim symbols) [a b c])))))))
 
 (defpage "/sim/:sim/:symbols/:a/:b/:c"
   {:keys [sim symbols a b c]}
   (json
     (let [symbols (clojure.string/split symbols #",")
-          states (simulate sim symbols a b c)
+          states (simulate (cons sim symbols) [a b c])
           header ()
           tabulate (fn [state]
                      (map fmt

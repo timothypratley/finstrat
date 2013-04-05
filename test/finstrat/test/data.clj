@@ -2,6 +2,6 @@
   (:use [finstrat.data]
         [clojure.test]))
 
-(deftest foo
+;(deftest foo
          ;(println (take 5 (get-table "^GSPC")))
-         (println (take 5 (get-table "F"))))
+         ;(println (take 5 (get-table "F"))))

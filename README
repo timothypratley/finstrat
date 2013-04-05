@@ -5,6 +5,7 @@ Analysing trading strategies for s&p 500
 Runs seem to work well with monthly data
 Runs mediocre for ^GSPX
 poor for F
+value at risk forward simulation
 
 ## Usage
 
