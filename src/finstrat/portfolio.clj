@@ -127,18 +127,18 @@
         gap-proportion (fn [signal]
                          (/ (gap signal) target))
         sell? (fn [signal]
-                (> (gap-proportion signal) tolerance))
+                (< (gap-proportion signal) (- tolerance)))
         sell-list (filter sell? signals)
         trim (fn [p signal]
-               (sell p signal (gap signal)))
+               (sell p signal (- (gap signal))))
         ;trim securities that are over
         p (reduce trim p sell-list)
         buy? (fn [signal]
-               (< (gap-proportion signal) (- tolerance)))
+               (> (gap-proportion signal) tolerance))
         buy-list (filter buy? signals)
         top-up (fn [p signal]
                  (buy p signal
-                      (min (p :cash) (- (gap signal)))))
+                      (min (p :cash) (gap signal))))
         ;top up securities that are under
         p (reduce top-up p buy-list)]
     p))
