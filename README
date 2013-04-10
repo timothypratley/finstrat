@@ -1,18 +1,31 @@
 # finstrat
 
-Analysing trading strategies for s&p 500
+Analysing effective investment strategies
+and formulating portfolio management models.
 
-Runs seem to work well with monthly data
-Runs mediocre for ^GSPX
-poor for F
-value at risk forward simulation
 
 ## Usage
 
 lein run
 
+
 ## License
 
-Copyright (C) 2013 Timothy Pratley
+Copyright (C) 2013 Timothy Pratley.
+Distributed under the Eclipse Public License.
 
-Distributed under the Eclipse Public License, the same as Clojure.
+
+# Notes
+Runs seem to work well with monthly data
+Runs mediocre for ^GSPX
+poor for F
+value at risk forward simulation
+VT BND
+Do distributions change over time?
+bootstrap stochastic -> efficient market hypothesis risk boundaries
+flag certain securities with :illiquid (house), or just provide a comparison/analysis?
+search for securities that work with strategies
+3D surface is a 2D multiline
+investigate effects of trying different reballancing techniques
+Evaluate the effect of taxation on strategies
+

@@ -24,7 +24,7 @@
                         {:query-params {:s symbol
                                         :ignore ".csv"}})
         csv (parse-csv (response :body))]
-    (reverse (bind csv))))
+    (reverse (map #(assoc % :symbol symbol) (bind csv)))))
 ;; caching for testing purposes, you will need to restart every day :)
 (def get-table (memoize get-table))
 

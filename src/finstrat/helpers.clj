@@ -60,3 +60,23 @@
   [m & more]
   (reduce update-keys m more))
 
+(defn- max-maps*
+  [k s m]
+  (let [current ((first s) k)
+        val (k m)]
+    (cond
+      (> current val) s
+      (> val current) #{m}
+      :else (conj s m))))
+
+(defn max-maps
+  "Returns the set of maps for which (m k), a number, is greatest
+   from a sequence of maps."
+  ([k] #{})
+  ([k m & more]
+   (reduce (partial max-maps* k) #{m} more)))
+
+(defn reduct
+  [val f coll]
+  (reduce f val coll))
+

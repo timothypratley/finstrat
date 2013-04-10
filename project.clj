@@ -6,7 +6,8 @@
                  ;[com.fxtlabs/stockings "1.0.0"]
                  [clj-time "0.4.5"]
                  [com.joestelmach/natty "0.6-SNAPSHOT"]
-                 [clojure-csv/clojure-csv "2.0.0-alpha2"]]
+                 [clojure-csv/clojure-csv "2.0.0-alpha2"]
+                 [criterium "0.3.1"]]
   :dev-dependencies [[lein-ring "0.7.5"]]
   :warn-on-reflection true
   :ring {:handler finstrat.server/handler}

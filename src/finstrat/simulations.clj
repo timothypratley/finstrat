@@ -1,11 +1,11 @@
 (ns finstrat.simulations
   (:require [clj-time.core :as t])
   (:use [finstrat.data]
-        [finstrat.mechanics]
+        [finstrat.portfolio]
         [finstrat.momentum]
         [finstrat.fundamentals]))
 
-(def signal-index {"momentum" momentum})
+(def screen-index {"momentum" momentum})
 
 (defn- calc-weights
   [fs table args]
@@ -23,33 +23,36 @@
         averages (apply map average weightss)]
     (map #(assoc %1 :weight %2) table averages)))
 
-(defn simulate
-  "Evaluate how a portfolio would perform over historical data.
-   Symbols indicate the security.
-   Signals are functions that calculate a weight
-   which indicates the probability of the security price rising.
-   example: (simulate [[sec1 [sig1 sig2]] [sec2 [sig2 sig3]]])
-   All inputs are strings which will be used to look up data and functions."
-  [symbol-signals args]
-  (for [[symbol & signals] symbol-signals]
+(defn- weight-one
+  [symbol screens args]
     (let [table (get-table symbol)
-          fs (map signal-index signals)
+          fs (map screen-index screens)
           ;TODO: why does this say expected: nil?
           _ (assert (seq fs)
-                    "no signals found") 
+                    "no screens found") 
           weights (calc-weights fs table args)]
       (assert (not-any? nil? (map :weight weights))
               "invalid weight calculated")
-      (rest (reductions update {:tax 0.2} weights)))))
+      weights))
+
+(defn simulate
+  "Evaluate how a portfolio would perform over historical data.
+   Symbols indicate the security.
+   Screens are functions that calculate a weight
+   which indicates the probability of the security price rising.
+   example: (simulate [[sec1 [sig1 sig2]] [sec2 [sig2 sig3]]])
+   All inputs are strings which will be used to look up data and functions."
+  [symbol-screens args]
+  (evaluate
+    (apply map list (for [[symbol & screens] symbol-screens]
+                      (weight-one symbol screens args)))))
 
 (defn simulate-apy
   "Calculate the annual percentage yeild for a simulation."
-  [symbol-signals args]
-  (let [result (simulate symbol-signals args)
-        initial (first (first result))
-        final (last (first result))
-        _ (println initial)
-        _ (println final)
+  [symbol-screens args]
+  (let [result (simulate symbol-screens args)
+        initial (first result)
+        final (last result)
         days (t/in-days (t/interval
                           (initial :date)
                           (final :date)))
