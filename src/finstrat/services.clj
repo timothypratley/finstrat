@@ -5,6 +5,7 @@
             [clj-time.core :as time])
   (:use [finstrat.simulations]
         [finstrat.helpers]
+        [finstrat.stats]
         ;[clojure.data.csv :only [write-csv]]
         [noir.core]
         [noir.response :only [redirect content-type status]]
@@ -105,4 +106,10 @@
                                [:date :price :value :note])))
           result (map tabulate states)]
       (cons header result))))
+
+(defpage "/r"
+  {:keys []}
+  (json
+    (cons ["X" "Y"]
+          (plot-move-dist (take 1000 (random-walk 5))))))
 

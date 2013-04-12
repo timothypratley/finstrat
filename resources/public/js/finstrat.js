@@ -3,12 +3,17 @@ angular.module('finstrat', ['charts'])
         $routeProvider
 	    .when("/about", {templateUrl: "about", controller: AboutCtrl})
 	    .when("/chart", {templateUrl: "chart", controller: ChartCtrl})
+	    .when("/histogram", {templateUrl: "histogram", controller: HistogramCtrl})
 	    .when("/mathbox", {templateUrl: "mathbox", controller: MathboxCtrl})
 	    .otherwise({redirectTo: "/about"});
     });
 
 function AboutCtrl () {}
 function ChartCtrl ($scope) {
+    //$scope.url = "/sim/momentum/F";
+    $scope.url = "/r";
+}
+function HistogramCtrl ($scope) {
     $scope.url = "/sim/momentum/F";
 }
 function MathboxCtrl ($scope) {
