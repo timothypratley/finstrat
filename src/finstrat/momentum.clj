@@ -22,3 +22,11 @@
                    :high (max high p)
                    :weight weight))))
 
+(defn hold
+  [target _ _ local datum]
+  (assoc local
+    :weight target))
+
+; TODO: might make this a namespace search instead of coded?
+(def screen-index {"momentum" momentum
+                   "hold" hold})

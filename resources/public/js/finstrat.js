@@ -10,18 +10,17 @@ angular.module('finstrat', ['charts'])
 
 function AboutCtrl () {}
 function ChartCtrl ($scope) {
-    //$scope.url = "/sim/momentum/F";
-    $scope.url = "/r";
+    $scope.url = "/sim/hold/F/1/1/1";
 }
 function HistogramCtrl ($scope) {
-    $scope.url = "/sim/momentum/F";
+    $scope.url = "/r";
 }
 function MathboxCtrl ($scope) {
     $scope.symbol = "^GSPC";
     $scope.domain = [[0, 2], [0, 2], [0, 2]];
-    $scope.n = [11, 11, 1];
+    $scope.n = [5, 5, 1];
     $scope.submit = function () {
-        $scope.url = "/sim/momentum/" + $scope.symbol + "/"
+        $scope.url = "/sim/hold/" + $scope.symbol + "/"
             + $scope.domain[0][0] + "/"
             + $scope.domain[0][1] + "/"
             + $scope.n[0] + "/"

@@ -52,8 +52,7 @@
 
 (defpage "/chart" []
   (html
-    ;[:div {:chart "performance"}]
-    [:div {:chart "dist"}]))
+    [:div {:chart "performance"}]))
 
 (defpage "/mathbox" []
   (html
@@ -81,6 +80,7 @@
 
 (defpage "/histogram" []
   (html
+    [:div {:chart "dist"}]
     [:style "
 .bar rect {
   fill: steelblue;
