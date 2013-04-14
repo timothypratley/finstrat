@@ -10,7 +10,7 @@ angular.module('finstrat', ['charts'])
 
 function AboutCtrl () {}
 function ChartCtrl ($scope) {
-    $scope.url = "/sim/hold/F/1/1/1";
+    $scope.url = "/sim/momentum/F_X/1/1/1";
 }
 function HistogramCtrl ($scope) {
     $scope.url = "/r";

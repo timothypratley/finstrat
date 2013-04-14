@@ -21,8 +21,9 @@
   [symbol]
   ; TODO: is there a way to query only the Date and Adj Close?
   (let [response (client/get "http://ichart.finance.yahoo.com/table.csv"
-                        {:query-params {:s symbol
-                                        :ignore ".csv"}})
+                             {:throw-entire-message? true
+                              :query-params {:s symbol
+                                             :ignore ".csv"}})
         csv (parse-csv (response :body))]
     (reverse (map #(assoc % :symbol symbol) (bind csv)))))
 ;; caching for testing purposes, you will need to restart every day :)
