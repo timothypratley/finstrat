@@ -5,6 +5,7 @@
             [clj-time.core :as time])
   (:use [finstrat.simulations]
         [finstrat.helpers]
+        [finstrat.stats]
         ;[clojure.data.csv :only [write-csv]]
         [noir.core]
         [noir.response :only [redirect content-type status]]
@@ -74,13 +75,14 @@
   (dosomething a b c))
 
 ;TODO: why so slow for big numbers?
-(defpage "/sim/:sim/:symbols/:astart/:aend/:acount/:bstart/:bend/:bcount/:cstart/:cend/:ccount"
-  {:keys [sim symbols
+(defpage "/sim/:screens/:symbols/:astart/:aend/:acount/:bstart/:bend/:bcount/:cstart/:cend/:ccount"
+  {:keys [screens symbols
           astart aend acount
           bstart bend bcount
           cstart cend ccount]}
   (json
-    (let [symbols (clojure.string/split symbols #",")
+    (let [screens (clojure.string/split screens #",")
+          symbols (clojure.string/split symbols #",")
           as (apply rangef (map parse-number
                                 [astart aend acount]))
           bs (apply rangef (map parse-number
@@ -90,14 +92,15 @@
       (for [a as]
         (for [b bs]
           (for [c cs]
-            ;; TODO: match sim with symbols
-            (simulate-apy (cons sim symbols) [a b c])))))))
+            ;; TODO: match sim with symbols... pass in JSON descriptor
+            (simulate-apy (map #(cons % screens) symbols) [a b c])))))))
 
-(defpage "/sim/:sim/:symbols/:a/:b/:c"
-  {:keys [sim symbols a b c]}
+(defpage "/sim/:screens/:symbols/:a/:b/:c"
+  {:keys [screens symbols a b c]}
   (json
     (let [symbols (clojure.string/split symbols #",")
-          states (simulate (cons sim symbols) [a b c])
+          screens (clojure.string/split screens #",")
+          states (simulate (map #(cons % screens) symbols) [a b c])
           header ()
           tabulate (fn [state]
                      (map fmt
@@ -105,4 +108,10 @@
                                [:date :price :value :note])))
           result (map tabulate states)]
       (cons header result))))
+
+(defpage "/r"
+  {:keys []}
+  (json
+    (cons ["X" "Y"]
+          (plot-move-dist (take 1000 (random-walk 5))))))
 

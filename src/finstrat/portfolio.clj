@@ -212,6 +212,6 @@
   "Evaluate the performance of a portfolio over historical data.
    stream is a seq of signals.
    A signal is the price and weight of a security at a point in time."
-  [stream]
-  (rest (reductions update (portfolio 10000 (first stream)) stream)))
+  [cash stream]
+  (rest (reductions update (portfolio cash (first stream)) stream)))
 
