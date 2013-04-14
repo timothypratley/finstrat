@@ -17,7 +17,8 @@
   (let [price (signal :price)
         _ (assert (pos? price)
                   "Should not buy free securities")
-        units (/ spend price)]
+        units (Math/floor (/ spend price))
+        spend (* units price)]
     (-> p
       (update-in [:cash] - spend)
       (update-in [:comments] conj
@@ -74,8 +75,8 @@
                    "Should only sell positive values")
          units (if (= price 0)
                  held
-                 (/ value price))
-         _ (println "UNITS HELD" units held)
+                 (Math/floor (/ value price)))
+         value (* units price)
          _ (assert (and (<= units held) (pos? held))
                    "Should only sell securities held in the portfolio")
          cost (cost-of security units)
@@ -168,7 +169,6 @@
 (defn- portfolio
   "Create a portfolio"
   [cash signals]
-  (println "SYMBOLS" (map :symbol signals))
   {:cash cash
    :tax 0.2
    :security (zipmap (map :symbol signals)
