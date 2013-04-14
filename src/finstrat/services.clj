@@ -11,7 +11,6 @@
         [noir.response :only [redirect content-type status]]
         [slingshot.slingshot :only [try+]]))
 
-;TODO: don't need?
 (defn readable-date
   [date]
   (format/unparse (if (= (time/year date) (time/year (time/now)))
@@ -23,19 +22,6 @@
   (fn [d ^com.fasterxml.jackson.core.JsonGenerator jsonGenerator]
     (.writeString jsonGenerator (readable-date d))))
 
-(defn tostr-ds-date
-  "converts a joda time into a json data source date"
-  [date]
-  (str "Date("
-       (clojure.string/join
-         "," (time/year date) (dec (time/month date)) (time/day date) ")")))
-
-;; TODO: add as encoder instead?
-(defn fmt
-  [value]
-  (cond
-    (instance? org.joda.time.DateTime value) (tostr-ds-date value)
-    :else value))
 
 (defn column-type
   [s]
@@ -81,8 +67,8 @@
           bstart bend bcount
           cstart cend ccount]}
   (json
-    (let [screens (clojure.string/split screens #",")
-          symbols (clojure.string/split symbols #",")
+    (let [screens (clojure.string/split screens #"_")
+          symbols (clojure.string/split symbols #"_")
           as (apply rangef (map parse-number
                                 [astart aend acount]))
           bs (apply rangef (map parse-number
@@ -98,16 +84,19 @@
 (defpage "/sim/:screens/:symbols/:a/:b/:c"
   {:keys [screens symbols a b c]}
   (json
-    (let [symbols (clojure.string/split symbols #",")
-          screens (clojure.string/split screens #",")
-          states (simulate (map #(cons % screens) symbols) [a b c])
-          header ()
-          tabulate (fn [state]
-                     (map fmt
-                          (map state
-                               [:date :price :value :note])))
-          result (map tabulate states)]
-      (cons header result))))
+    (let [symbols (sort (clojure.string/split symbols #"_"))
+          screens (clojure.string/split screens #"_")
+          ss (map #(cons % screens) symbols)
+          states (simulate ss (map parse-number [a b c]))
+          _ (println (last states))
+          ;; TODO: is there a double cons?
+          header (cons "Date" (cons "Cash" symbols))
+          rows (for [r states]
+                 (cons (r :date)
+                       (cons (r :cash)
+                             (map #(get-in r [:security % :value]) symbols))))]
+      ;; TODO: too much data for area chart
+      (take 200 (cons header rows)))))
 
 (defpage "/r"
   {:keys []}

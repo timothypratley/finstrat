@@ -11,10 +11,11 @@ angular.module('charts', [])
             vAxis: {title: 'Y'}
         },
 		performance: {
-			type: "AnnotatedTimeLine",
+			type: "AreaChart",
+            isStacked: true,
 			title: "Performance",
-			vAxis: {title: "Value", minValue: 0},
-		    hAxis: {title: "Time"},
+			vAxis: {title: "$", minValue: 0},
+		    hAxis: {title: "Date"},
             displayAnnotations: true,
 			areaOpacity: 0.0
 		}
@@ -30,12 +31,23 @@ angular.module('charts', [])
 	    		$log.info("Querying " + url);
                 $http.get(url)
                     .success(function (data) {
+                        //TODO: send a json chart object instead?
+                        // wow google, why do you hate dates?
+                        // google.visualization.arrayToDataTable(data),
+                        var d = new google.visualization.DataTable();
+                        console.log(data);
+                        d.addColumn('date', data[0][0]);
+                        $.each(data[0].slice(1), function(index, value) {
+                            d.addColumn('number', value);
+                        });
+                        $.each(data.slice(1), function(index, value) {
+                            value[0] = new Date(value[0]);
+                            d.addRow(value);
+                        });
                         //// TODO: this is a workaround,
                         //why is o not working???
-                        o = {width: 1000, height: 500};
-                        chart.draw(
-                            google.visualization.arrayToDataTable(data),
-                            o);
+                        o = {width: 1000, height: 500, isStacked: true};
+                        chart.draw(d, o);
                     })
                     .error(function (data, status) {
                         $log.error(status);

@@ -6,7 +6,7 @@
 
 (deftest test-simulate
   (let [result (simulate [["F" "hold"]] [1 1 1])]
-    (println (last result))))
+    (println (remove nil? (map :comments result)))))
 
 (deftest test-simulate-apy
          (println

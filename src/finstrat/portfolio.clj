@@ -15,18 +15,21 @@
   (assert (>= (p :cash) spend)
           "Should only buy to liquidity limit")
   (let [price (signal :price)
+        symbol (signal :symbol)
         _ (assert (pos? price)
                   "Should not buy free securities")
-        units (Math/floor (/ spend price))
+        units (int (/ spend price))
         spend (* units price)]
     (-> p
       (update-in [:cash] - spend)
       (update-in [:comments] conj
-                 (str "bought " units "@" price " (-" spend ")"))
-      (update-in [:security (signal :symbol)]
+                 (str "bought " units " " symbol
+                      " @ " price " for $" spend))
+      (update-in [:security symbol]
                  #(-> %
                     (update-in [:units] + units)
                     (update-in [:cost] + spend))))))
+; TODO: move these out... they don't run here
 (deftest test-buy
          (let [p {:cash 10
                   :security {"X" {:units 0
@@ -63,7 +66,8 @@
   ([p signal]
    (sell p signal nil))
   ([p signal value]
-   (let [security (get-in p [:security (signal :symbol)])
+   (let [symbol (signal :symbol)
+         security (get-in p [:security symbol])
          held (security :units)
          price (signal :price)
          ;_ (println "SECURITY" security)
@@ -75,7 +79,7 @@
                    "Should only sell positive values")
          units (if (= price 0)
                  held
-                 (Math/floor (/ value price)))
+                 (int (/ value price)))
          value (* units price)
          _ (assert (and (<= units held) (pos? held))
                    "Should only sell securities held in the portfolio")
@@ -84,7 +88,8 @@
      (-> p
        (update-in [:cash] + proceeds)
        (update-in [:comments] conj
-                  (str "sold " units "@" price " (+" proceeds ")"))
+                  (str "sold " units " " symbol
+                       " @ " price " for $" proceeds))
        (update-in [:security (signal :symbol)]
                   #(-> %
                      (update-in [:units] - units)
@@ -201,7 +206,7 @@
     ;; invariant - TODO: how to do invariant in Clojure (entry, during, exit)
     (assert (not (neg? (p :cash)))
             "Cash should not be overdrawn")
-    (assert (every? #(= date (% :date)) (rest signals))
+    #_(assert (every? #(= date (% :date)) (rest signals))
             "Signals should all have the same date")
     (assoc p
            :date date
