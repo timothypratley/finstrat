@@ -52,7 +52,9 @@
 
 (defpage "/chart" []
   (html
-    [:div {:chart "performance"}]))
+    [:div {:chart "performance"
+           ;TODO: why why why?
+           :style "width: 1000px; height: 500px"}]))
 
 (defpage "/mathbox" []
   (html

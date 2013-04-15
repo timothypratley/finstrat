@@ -87,16 +87,19 @@
     (let [symbols (sort (clojure.string/split symbols #"_"))
           screens (clojure.string/split screens #"_")
           ss (map #(cons % screens) symbols)
-          states (simulate ss (map parse-number [a b c]))
+          args (map parse-number [a b c])
+          states (simulate ss args)
           _ (println (last states))
-          ;; TODO: is there a double cons?
-          header (cons "Date" (cons "Cash" symbols))
+          ss (map #(cons % ["hold"]) symbols)
+          baseline (map :value (simulate ss args))
+          states (map #(assoc %1 :baseline %2) states baseline)
+          header (concat ["Date" "Cash" "Baseline" "Text"] symbols)
           rows (for [r states]
-                 (cons (r :date)
-                       (cons (r :cash)
-                             (map #(get-in r [:security % :value]) symbols))))]
+                 (concat [(r :date) (r :cash) (r :baseline)
+                          (clojure.string/join "; " (r :comments))]
+                         (map #(get-in r [:security % :value]) symbols)))]
       ;; TODO: too much data for area chart
-      (take 200 (cons header rows)))))
+      (cons header rows))))
 
 (defpage "/r"
   {:keys []}
