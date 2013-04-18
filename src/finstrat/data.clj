@@ -1,5 +1,6 @@
 (ns finstrat.data
-  (:require [clj-http.client :as client])
+  (:require [clj-http.client :as client]
+            [net.cgrand.enlive-html :as html])
   (:use [finstrat.helpers]
         ;[stockings.core]
         [clojure-csv.core]))
@@ -36,3 +37,19 @@
   []
   (get-hisotrical-quotes "YHOO" (LocalDate. 2011 4 1) (LocalDate. 2011 5 1)))
 
+
+(defn get-multpl
+  []
+  ;(let [;response (client/get "http://www.multpl.com/table"
+        ;                {:query-params {:f "m"}})
+  (let [data (map html/text
+               (html/select
+                 (html/html-resource (java.net.URL. "http://www.multpl.com/table?f=m"))
+                 [:table#datatable :tr :td]))
+        pairs (partition 2 data)
+        ms (map zipmap (repeat [:date :pe]) pairs)
+        ;; TODO: use update-many instead
+        ms (map #(update-in % [:date] parse-date) ms)
+        ;; TODO: the latest value is marked estimate and does not parse!
+        ms (map #(update-in % [:pe] parse-number) ms)]
+    ms))
