@@ -60,3 +60,4 @@
         yearly (Math/pow growth (/ 1 years))
         percent (* 100 (- yearly 1))]
     percent))
+

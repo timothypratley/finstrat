@@ -5,16 +5,17 @@ angular.module('charts', [])
 			height: 500
 		},
         dist: {
-            type: "AreaChart",
+            chart: "AreaChart",
             title: "Distribution",
             hAxis: {title: 'X'},
             vAxis: {title: 'Y'}
         },
 		performance: {
-			type: "AnnotatedTimeLine",
+			chart: "AnnotatedTimeLine",
+            isStacked: true,
 			title: "Performance",
-			vAxis: {title: "Value", minValue: 0},
-		    hAxis: {title: "Time"},
+			vAxis: {title: "$", minValue: 0},
+		    hAxis: {title: "Date"},
             displayAnnotations: true,
 			areaOpacity: 0.0
 		}
@@ -25,17 +26,35 @@ angular.module('charts', [])
 	    	$.extend(o, options.general);
 	    	$.extend(o, options[attrs.chart]);
 	        elem[0].innerHTML = "Loading " + o.title + "...";
-	        chart = new google.visualization[o.type](elem[0]);
+	        chart = new google.visualization[o.chart](elem[0]);
 	    	query = function(url) {
 	    		$log.info("Querying " + url);
                 $http.get(url)
                     .success(function (data) {
-                        //// TODO: this is a workaround,
-                        //why is o not working???
-                        o = {width: 1000, height: 500};
-                        chart.draw(
-                            google.visualization.arrayToDataTable(data),
-                            o);
+                        //TODO: send a json chart object instead?
+                        // wow google, why do you hate dates?
+                        // google.visualization.arrayToDataTable(data),
+                        var d = new google.visualization.DataTable();
+                        // configure headers
+                        $.each(data[0], function(index, value) {
+                            var eq = function(x) {return data[0][index] === x;},
+                                add = function(x) {d.addColumn(x, value);};
+                            if (eq("Date")) {
+                                add('date');
+                            } else if (eq("Title")) {
+                                add('string');
+                            } else if (eq("Text")) {
+                                add('string');
+                            } else {
+                                add('number');
+                            }
+                        });
+                        // add rows
+                        $.each(data.slice(1), function(index, value) {
+                            value[0] = new Date(value[0]);
+                            d.addRow(value);
+                        });
+                        chart.draw(d, o);
                     })
                     .error(function (data, status) {
                         $log.error(status);
