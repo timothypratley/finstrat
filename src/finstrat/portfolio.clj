@@ -19,6 +19,8 @@
                   "Should not buy free securities")
         fee (get-in p [:fees :trade])
         units (int (/ (- spend fee) price))
+        _ (assert (pos? units)
+                  "Should buy more than zero units")
         spend (+ (* units price) fee)]
     (-> p
       (update-in [:cash] - spend)
@@ -29,7 +31,6 @@
                  #(-> %
                     (update-in [:units] + units)
                     (update-in [:cost] + spend))))))
-; TODO: move these out... they don't run here
 
 (defn- cost-of
   [security units]

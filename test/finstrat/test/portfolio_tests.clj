@@ -16,7 +16,7 @@
         (is (= (p :cash) 10))))
     (testing "Fees"
       (let [p (assoc-in p [:fees :trade] 9)
-            p (#'finstrat.portfolio/buy p signal 10)
+            p (#'finstrat.portfolio/buy p signal 20)
             units (get-in p [:security "X" :units])]
         (is (= units 1))
         (is (= (p :cash) 1))))))
