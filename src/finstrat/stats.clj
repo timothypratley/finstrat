@@ -1,5 +1,4 @@
-(ns finstrat.stats
-  (:use [clojure.test]))
+(ns finstrat.stats)
 
 (defn percentage-change
   "The percentage change between two values"
@@ -10,8 +9,6 @@
   "The percentage changes between a set of values"
   [data]
   (map percentage-change data (rest data)))
-(deftest test-moves
-  (is (= (moves [100 101]) [1])))
 
 (defn histogram
   [data]
@@ -68,12 +65,12 @@
      coords))
 
 (defn random-walk
-  "Returns a lazy seq of new values adjusted from x with a slight upward bias."
+  "Returns a lazy seq of new values randomly adjusted from x
+   with a slight upward bias."
   [x]
   (lazy-seq
     (cons x (random-walk
-              (* x (- 1.026 (apply + (map rand (take 10 (repeat 0.005))))))))))
+              (* x (- 1.026
+                      ;; mimicing a normal distribution
+                      (apply + (repeatedly 10 #(rand 0.005)))))))))
 
-(deftest test-plot-move-dist
-  (println "WALK" (take 10 (random-walk 5)))
-  (println "PLOT" (plot-move-dist (take 1000 (random-walk 5)))))

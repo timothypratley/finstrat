@@ -51,3 +51,5 @@ Pass a clojure data structure instead of url encoding arguments??
 but I like urls
 use enlive to scrape multpl
 
+Analyze past decisions against a benchmark
+

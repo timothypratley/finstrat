@@ -1,5 +1,4 @@
-(ns finstrat.portfolio
-  (:use [clojure.test]))
+(ns finstrat.portfolio)
 
 ;; TODO: use dataflow for :values as they are dependent
 ;; What are the implications of floating point precision?
@@ -18,8 +17,11 @@
         symbol (signal :symbol)
         _ (assert (pos? price)
                   "Should not buy free securities")
-        units (int (/ spend price))
-        spend (* units price)]
+        fee (get-in p [:fees :trade])
+        units (int (/ (- spend fee) price))
+        _ (assert (pos? units)
+                  "Should buy more than zero units")
+        spend (+ (* units price) fee)]
     (-> p
       (update-in [:cash] - spend)
       (update-in [:comments] (fnil conj [])
@@ -29,15 +31,6 @@
                  #(-> %
                     (update-in [:units] + units)
                     (update-in [:cost] + spend))))))
-; TODO: move these out... they don't run here
-(deftest test-buy
-         (let [p {:cash 10
-                  :security {"X" {:units 0
-                                  :cost 0}}}
-               signal {:symbol "X"
-                       :price 10}
-               p (buy p signal 10)]
-           (is (= (get-in p [:security "X" :units]) 1))))
 
 (defn- cost-of
   [security units]
@@ -52,14 +45,6 @@
         value (* units (signal :price))
         profit (- value cost)]
     (* profit (p :tax))))
-(deftest test-tax
-         (let [p {:tax 0.2
-                  :security {"X" {:units 1
-                                  :cost 10}}}
-               signal {:symbol "X"
-                       :price 11}]
-           (is (= (tax p signal 1) 0.2))))
-
 
 ; TODO: tax is only paid in April if not withheld
 (defn- sell
@@ -84,7 +69,8 @@
          _ (assert (and (<= units held) (pos? held))
                    "Should only sell securities held in the portfolio")
          cost (cost-of security units)
-         proceeds (- value (tax p signal units))]
+         fee (get-in p [:fees :trade])
+         proceeds (- value (tax p signal units) fee)]
      (-> p
        (update-in [:cash] + proceeds)
        (update-in [:comments] (fnil conj [])
@@ -94,15 +80,6 @@
                   #(-> %
                      (update-in [:units] - units)
                      (update-in [:cost] - cost)))))))
-(deftest test-sell
-         (let [p {:cash 0
-                  :tax 0.2
-                  :security {"X" {:units 1
-                                  :cost 10}}}
-               signal {:symbol "X"
-                       :price 11}
-               p (sell p signal 11)]
-         (is (= (p :cash) 10.8))))
 
 (defn- raw-value
   [p signal]
@@ -119,6 +96,37 @@
       0)))
 
 (defn- ballance
+  "Given a portfolio that is only invested in signals,
+   evaluate how many securities should be bought or sold
+   to maintain a relatively equal weighting between them."
+  [p signals]
+  (let [total (apply + (p :cash)
+                 (map (partial raw-value p) signals))
+        target (/ total (count signals))
+        ;only buy and sell if a long way off the target allocation
+        tolerance 0.2
+        gap (fn [signal]
+              (- target (raw-value p signal)))
+        gap-proportion (fn [signal]
+                         (/ (gap signal) target))
+        sell? (fn [signal]
+                (< (gap-proportion signal) (- tolerance)))
+        sell-list (filter sell? signals)
+        trim (fn [p signal]
+               (sell p signal (- (gap signal))))
+        ;trim securities that are over
+        p (reduce trim p sell-list)
+        buy? (fn [signal]
+               (> (gap-proportion signal) tolerance))
+        buy-list (filter buy? signals)
+        top-up (fn [p signal]
+                 (buy p signal
+                      (min (p :cash) (gap signal))))
+        ;top up securities that are under
+        p (reduce top-up p buy-list)]
+    p))
+
+(defn- ballance2
   "Given a portfolio that is only invested in signals,
    evaluate how many securities should be bought or sold
    to maintain a relatively equal weighting between them."
@@ -176,6 +184,7 @@
   [cash signals]
   {:cash cash
    :tax 0.2
+   :fees {:trade 9}
    :security (zipmap (map :symbol signals)
                      (repeat {:units 0
                               :cost 0}))

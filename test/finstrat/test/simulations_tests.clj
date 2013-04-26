@@ -1,4 +1,4 @@
-(ns finstrat.test.simulations
+(ns finstrat.test.simulations_tests
   (:use [finstrat.simulations]
         [finstrat.helpers]
         [clojure.test]
