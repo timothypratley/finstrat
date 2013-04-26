@@ -23,8 +23,8 @@ angular.module('charts', [])
     .directive('chart', function(options, $log, $http) {
 	    return function(scope, elem, attrs) {
 	        var chart, query, o = {};
-	    	$.extend(o, options.general);
-	    	$.extend(o, options[attrs.chart]);
+	    	angular.extend(o, options.general);
+	    	angular.extend(o, options[attrs.chart]);
 	        elem[0].innerHTML = "Loading " + o.title + "...";
 	        chart = new google.visualization[o.chart](elem[0]);
 	    	query = function(url) {
@@ -34,24 +34,27 @@ angular.module('charts', [])
                         //TODO: send a json chart object instead?
                         // wow google, why do you hate dates?
                         // google.visualization.arrayToDataTable(data),
-                        var d = new google.visualization.DataTable();
+                        var d = new google.visualization.DataTable(),
+                            timeseries = false;
                         // configure headers
                         $.each(data[0], function(index, value) {
-                            var eq = function(x) {return data[0][index] === x;},
-                                add = function(x) {d.addColumn(x, value);};
-                            if (eq("Date")) {
-                                add('date');
-                            } else if (eq("Title")) {
-                                add('string');
-                            } else if (eq("Text")) {
-                                add('string');
+                            var add = function(x) {d.addColumn(x, value);};
+                            if (value === "Date") {
+                                add("date");
+                                timeseries = true;
+                            } else if (value === "Title") {
+                                add("string");
+                            } else if (value === "Text") {
+                                add("string");
                             } else {
-                                add('number');
+                                add("number");
                             }
                         });
                         // add rows
                         $.each(data.slice(1), function(index, value) {
-                            value[0] = new Date(value[0]);
+                            if (timeseries) {
+                                value[0] = new Date(value[0]);
+                            }
                             d.addRow(value);
                         });
                         chart.draw(d, o);
@@ -129,8 +132,8 @@ angular.module('charts', [])
     .directive('mathbox', function(options, $log, $http) {
 	    return function(scope, elem, attrs) {
 	        var mathbox, o = {};
-	    	$.extend(o, options.general);
-	    	$.extend(o, options[attrs.mathbox]);
+	    	angular.extend(o, options.general);
+	    	angular.extend(o, options[attrs.mathbox]);
 	        //elem[0].innerHTML = "Loading " + o.title + "...";
 
             mathbox = mathBox(elem[0], {

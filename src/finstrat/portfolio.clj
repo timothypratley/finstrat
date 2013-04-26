@@ -22,7 +22,7 @@
         spend (* units price)]
     (-> p
       (update-in [:cash] - spend)
-      (update-in [:comments] conj
+      (update-in [:comments] (fnil conj [])
                  (str "bought " units " " symbol
                       " @ " price " for $" spend))
       (update-in [:security symbol]
@@ -87,7 +87,7 @@
          proceeds (- value (tax p signal units))]
      (-> p
        (update-in [:cash] + proceeds)
-       (update-in [:comments] conj
+       (update-in [:comments] (fnil conj [])
                   (str "sold " units " " symbol
                        " @ " price " for $" proceeds))
        (update-in [:security (signal :symbol)]
