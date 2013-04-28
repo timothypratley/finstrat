@@ -1,5 +1,6 @@
 (ns finstrat.data
   (:require [clj-http.client :as client]
+            [incanter.excel :as i]
             [net.cgrand.enlive-html :as html])
   (:use [finstrat.helpers]
         ;[stockings.core]
@@ -54,3 +55,13 @@
         ;; TODO: the latest value is marked estimate and does not parse!
         ms (map #(update-in % [:pe] parse-number) ms)]
     ms))
+
+(defn get-aaii-sentiment
+  []
+  (i/read-xls "http://www.aaii.com/files/surveys/sentiment.xls"))
+
+(defn get-isee
+  []
+  (i/read-xls " http://www.ise.com/isee#"))
+
+

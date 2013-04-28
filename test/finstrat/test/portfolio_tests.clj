@@ -30,7 +30,7 @@
         signal {:symbol "X"
                 :price 11}]
     (testing "Simple"
-      (let [p (#'finstrat.portfolio/sell p signal 11)]
+      (let [p (#'finstrat.portfolio/sell p signal 1)]
         (is (= (p :cash) 11))))
     (testing "Taxed"
       (let [p (assoc p :tax 0.2)
@@ -48,3 +48,22 @@
         signal {:symbol "X"
                 :price 11}]
     (is (= (#'finstrat.portfolio/tax p signal 1) 0.2))))
+
+(deftest test-reweight
+  (let [p {:cash 100
+           :tax 0.2
+           :fees {:trade 9}
+           :security {"X" {:units 1000
+                           :cost 10}
+                      "Y" {:units 0
+                           :cost 0}}}
+        x {:symbol "X"
+           :price 11
+           :weight 0}
+        y {:symbol "Y"
+           :price 300
+           :weight 1}
+        p (#'finstrat.portfolio/reweight p [x y])]
+    (is (zero? (get-in p [:security "X" :units])))
+    (is (pos? (get-in p [:security "Y" :units])))))
+

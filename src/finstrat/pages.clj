@@ -109,6 +109,6 @@
     [:div {:histogram "general"
            :style "font: 10px sans-serif"}]))
                   
-(defpage "/links"
+(defpage "/links/:symbol" []
   (html
-    [:a {:href "http://ycharts.com/companies/F/dashboard"}]))
+    [:a {:href "http://ycharts.com/companies/F/dashboard"} "dashboard"]))

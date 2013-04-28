@@ -2,6 +2,8 @@
   :description "Technical Analysis"
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [noir "1.3.0"]
+                 [incanter/incanter-core "1.4.1"]
+                 [incanter/incanter-excel "1.4.1"]
                  [clj-http-lite "0.1.0"]
                  ;[com.fxtlabs/stockings "1.0.0"]
                  [clj-time "0.4.5"]
