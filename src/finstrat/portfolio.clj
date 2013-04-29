@@ -22,9 +22,11 @@
         _ (assert (pos? units)
                   "Should buy more than zero units")
         spend (+ (* units price) fee)]
+    (assert (>= (p :cash) spend)
+            "Should not spend more than available")
     (-> p
       (update-in [:cash] - spend)
-      (update-in [:comments] conj
+      (update-in [:comments] (fnil conj [])
                  (str "bought " units " " symbol
                       " @ " price " for $" spend))
       (update-in [:security symbol]
@@ -46,109 +48,87 @@
         profit (- value cost)]
     (* profit (p :tax))))
 
+(defn- raw-value
+  ([p signal units]
+    (* units (signal :price)))
+  ([p signal]
+   (raw-value p signal
+              (get-in p [:security (signal :symbol) :units]))))
+
+(defn- sale-value
+  "Tax adjusted current value of a security as of signal in a portfolio p"
+  ([p signal units]
+   (if (pos? units)
+     (- (raw-value p signal units)
+        (tax p signal units)
+        (get-in p [:fees :trade]))
+     0))
+  ([p signal]
+   (sale-value p signal
+               (get-in p [:security (signal :symbol) :units]))))
+
+(defn- total
+  [p signals valuation]
+  (apply + (p :cash) (map (partial valuation p) signals)))
+
+(defn- sell-target
+  [p signal value]
+  (assert (pos? value)
+          "Should only sell positive values")
+  (assert (pos? (signal :price))
+          "Should only sell when there is a price")
+  (int (/ value (signal :price))))
+
 ; TODO: tax is only paid in April if not withheld
 (defn- sell
   ([p signal]
-   (sell p signal nil))
-  ([p signal value]
-   (let [symbol (signal :symbol)
-         security (get-in p [:security symbol])
-         held (security :units)
-         price (signal :price)
-         ;_ (println "SECURITY" security)
-         ;_ (println "SIGNAL" signal)
-         ;_ (println "HELD" held)
-         ;_ (println "PRICE" price)
-         value (or value (* price held))
-         _ (assert (pos? value)
-                   "Should only sell positive values")
+   (sell p signal
+         (get-in p [:security (signal :symbol) :units])))
+  ([p signal units]
+   (assert (pos? units)
+           "Should only sell positive units")
+   (let [s (signal :symbol)
+         held (get-in p [:security s :units])
          fee (get-in p [:fees :trade])
-         units (if (= price 0)
-                 held
-                 (int (/ value price)))
          _ (assert (pos? units)
                    "Should sell at least one unit")
-         value (* units price)
          _ (assert (and (<= units held) (pos? held))
                    "Should only sell securities held in the portfolio")
-         cost (cost-of security units)
-         proceeds (- value (tax p signal units) fee)
-         _ (assert (>= (+ proceeds (p :cash)) 0)
-                   "Should not incur more fees than cash")]
+         proceeds (sale-value p signal units)
+         _ (assert (pos? proceeds)
+                   "Cost should not exceed sale")]
      (-> p
        (update-in [:cash] + proceeds)
-       (update-in [:comments] conj
-                  (str "sold " units " " symbol
-                       " @ " price " for $" proceeds))
-       (update-in [:security (signal :symbol)]
+       (update-in [:comments] (fnil conj [])
+                  (str "sold " units " " s
+                       " @ " (signal :price) " for $" proceeds))
+       (update-in [:security s]
                   #(-> %
                      (update-in [:units] - units)
-                     (update-in [:cost] - cost)))))))
-
-(defn- raw-value
-  [p signal]
-  (let [units (get-in p [:security (signal :symbol) :units])]
-    (* units (signal :price))))
-
-(defn- taxed-value
-  "Tax adjusted current value of a security as of signal in a portfolio p"
-  [p signal]
-  (let [units (get-in p [:security (signal :symbol) :units])]
-    (if (pos? units)
-      (- (raw-value p signal)
-         (tax p signal units))
-      0)))
+                     (update-in [:cost] - (cost-of % units))))))))
 
 (defn- ballance
   "Given a portfolio that is only invested in signals,
    evaluate how many securities should be bought or sold
    to maintain a relatively equal weighting between them."
   [p signals]
-  (let [total (apply + (p :cash)
-                 (map (partial raw-value p) signals))
-        target (/ total (count signals))
-        ;only buy and sell if a long way off the target allocation
+  (let [raw-total (total p signals raw-value)
+        target (/ raw-total (count signals))
+        ; only buy and sell if a long way off the target allocation
         tolerance 0.2
         gap (fn [signal]
               (- target (raw-value p signal)))
         gap-proportion (fn [signal]
                          (/ (gap signal) target))
         sell? (fn [signal]
-                (< (gap-proportion signal) (- tolerance)))
+                (and
+                  (< (gap-proportion signal) (- tolerance))
+                  (pos? (sale-value p signal
+                                    (sell-target p signal (- (gap signal)))))))
         sell-list (filter sell? signals)
         trim (fn [p signal]
-               (sell p signal (- (gap signal))))
-        ;trim securities that are over
-        p (reduce trim p sell-list)
-        buy? (fn [signal]
-               (> (gap-proportion signal) tolerance))
-        buy-list (filter buy? signals)
-        top-up (fn [p signal]
-                 (buy p signal
-                      (min (p :cash) (gap signal))))
-        ;top up securities that are under
-        p (reduce top-up p buy-list)]
-    p))
-
-(defn- ballance2
-  "Given a portfolio that is only invested in signals,
-   evaluate how many securities should be bought or sold
-   to maintain a relatively equal weighting between them."
-  [p signals]
-  (let [total (apply + (p :cash)
-                 (map (partial raw-value p) signals))
-        target (/ total (count signals))
-        ;only buy and sell if a long way off the target allocation
-        tolerance 0.2
-        gap (fn [signal]
-              (- target (raw-value p signal)))
-        gap-proportion (fn [signal]
-                         (/ (gap signal) target))
-        sell? (fn [signal]
-                (< (gap-proportion signal) (- tolerance)))
-        sell-list (filter sell? signals)
-        trim (fn [p signal]
-               (sell p signal (- (gap signal))))
+               (sell p signal
+                     (sell-target p signal (- (gap signal)))))
         ;trim securities that are over
         p (reduce trim p sell-list)
         buy? (fn [signal]
@@ -166,9 +146,9 @@
    such that the resulting portfolio is prudently invested."
   [p signals]
   (let [sorted (sort-by :weight signals)
-        best ((last sorted) :weight)
+        best-weight ((last sorted) :weight)
         ; http://www.investopedia.com/terms/l/long.asp
-        long? #(>= (% :weight) best 0.1)
+        long? #(>= (% :weight) best-weight 0.1)
         longs (take-while long? (reverse sorted))
         ; TODO: try ballancing into only the newest/mid/oldest outperforms
         ; http://www.investopedia.com/terms/s/short.asp
@@ -203,7 +183,7 @@
                    (let [units (security :units)]
                      (-> security
                        (assoc :price price)
-                       (assoc :value (taxed-value p signal)))))))))
+                       (assoc :value (sale-value p signal)))))))))
 
 (defn- update
   [p signals]
@@ -219,12 +199,12 @@
     ;; invariant - TODO: how to do invariant in Clojure (entry, during, exit)
     (assert (not (neg? (p :cash)))
             "Cash should not be overdrawn")
+    ; TODO: should this be handled differently?
     #_(assert (every? #(= date (% :date)) (rest signals))
             "Signals should all have the same date")
     (assoc p
            :date date
-           :value (apply + (p :cash)
-                         (map (partial taxed-value p) signals)))))
+           :value (total p signals sale-value))))
 
 (defn evaluate
   "Evaluate the performance of a portfolio over historical data.

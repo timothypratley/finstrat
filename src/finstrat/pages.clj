@@ -52,8 +52,15 @@
 
 (defpage "/chart" []
   (html
+    [:form {:ng-submit "submit()"
+            :novalidate true
+            ;gives the container size so it will envelope floats
+            :style "overflow:hidden;width:100%"}
+     [:label "Simulation" [:input {:ng-model "url"
+                                   :style "width: 500px"}]]
+     (submit-button "Simulate")]
     [:div {:chart "performance"
-           ;TODO: why why why?
+           ;TODO: why why why? I just want it big
            :style "width: 1000px; height: 500px"}]))
 
 (defpage "/mathbox" []
@@ -102,4 +109,6 @@
     [:div {:histogram "general"
            :style "font: 10px sans-serif"}]))
                   
-
+(defpage "/links/:symbol" []
+  (html
+    [:a {:href "http://ycharts.com/companies/F/dashboard"} "dashboard"]))

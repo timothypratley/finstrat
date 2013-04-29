@@ -15,12 +15,31 @@ Copyright (C) 2013 Timothy Pratley.
 Distributed under the Eclipse Public License.
 
 
+# Questions
+
+Given a portfolio size, how much can it be diversified
+without incuring noticable fee degregation?
+For small/medium/large amounts, how to work them best?
+Basic: adviser/401k/EFTs/interest
+Tuning: Fee reduction, error reduction
+
+Does my strategy work on historical data?
+Does an EFT truely cost 0.5% relative to my own portfolio?
+Should gold be in my portfolio?
+Are there securities with inverse relationships that both have +ve yield?
+Is buying power related to gold?
+Are 2x EFTs efficient leverage?
+VT BND GLD SPY house?
+Interactive retirement calculator
+How to spend your time/capital
+small business, salary, self-sufficency, corporate, investment
+
+
 # Notes
 Runs seem to work well with monthly data
 Runs mediocre for ^GSPX
 poor for F
 value at risk forward simulation
-VT BND
 Do distributions change over time?
 bootstrap stochastic -> efficient market hypothesis risk boundaries
 flag certain securities with :illiquid (house), or just provide a comparison/analysis?
@@ -28,6 +47,9 @@ search for securities that work with strategies
 3D surface is a 2D multiline
 investigate effects of trying different reballancing techniques
 Evaluate the effect of taxation on strategies
+Pass a clojure data structure instead of url encoding arguments??
+but I like urls
+use enlive to scrape multpl
 
 Analyze past decisions against a benchmark
 
