@@ -62,15 +62,19 @@
          value (or value (* price held))
          _ (assert (pos? value)
                    "Should only sell positive values")
+         fee (get-in p [:fees :trade])
          units (if (= price 0)
                  held
                  (int (/ value price)))
+         _ (assert (pos? units)
+                   "Should sell at least one unit")
          value (* units price)
          _ (assert (and (<= units held) (pos? held))
                    "Should only sell securities held in the portfolio")
          cost (cost-of security units)
-         fee (get-in p [:fees :trade])
-         proceeds (- value (tax p signal units) fee)]
+         proceeds (- value (tax p signal units) fee)
+         _ (assert (>= (+ proceeds (p :cash)) 0)
+                   "Should not incur more fees than cash")]
      (-> p
        (update-in [:cash] + proceeds)
        (update-in [:comments] conj
