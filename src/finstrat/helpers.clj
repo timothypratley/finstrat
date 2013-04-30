@@ -77,6 +77,21 @@
    (reduce (partial max-maps* k) #{m} more)))
 
 (defn reduct
+  "Passing arguments in a different order for convenient capture with partial"
   [val f coll]
   (reduce f val coll))
+
+(defn pad
+  ([s] (pad (first s) s))
+  ([prev s]
+   (if (seq s)
+     (let [curr (or (first s) prev)]
+       (cons curr (lazy-seq (pad curr (rest s))))))))
+
+(defn pad-rows
+  ([s] (pad-rows (first s) s))
+  ([prev s]
+   (if (seq s)
+     (let [curr (map #(or %1 %2) (first s) prev)]
+       (cons curr (lazy-seq (pad-rows curr (rest s))))))))
 

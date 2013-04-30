@@ -3,36 +3,19 @@
   (:use [finstrat.data]
         [finstrat.portfolio]
         [finstrat.momentum]
-        [finstrat.fundamentals]))
+        [finstrat.helpers]))
 
-(defn- calc-weights
-  [fs table args]
-  (let [average (comp #(/ % (count fs)) +)
-        weightss (for [f fs]
-                  ; we don't want the empty state
-                  (let [results (rest (reductions
-                                        (apply partial f args)
-                                        {}
-                                        table))
-                        weights (map :weight results)]
-                    (assert (not-any? nil? weights)
-                            (str "invalid weight calculated by " f))
-                    weights))
-        averages (apply map average weightss)]
-    (map #(assoc %1 :weight %2) table averages)))
-
-(defn- weight-one
-  [symbol screens args]
-  (println "SCREENS" screens)
-  (let [table (get-table symbol)
-        fs (remove nil? (map screen-index screens))
-        ; TODO: why does assert say expected: nil?
-        _ (assert (seq fs)
-                  "no screens found") 
-        weights (calc-weights fs table args)]
-    (assert (not-any? nil? (map :weight weights))
-            "invalid weight calculated")
-    weights))
+;TODO: args should be per screen
+(defn- calc-weight
+  [args screen-map signal]
+  (let [screens (screen-map (signal :symbol))
+        weights (for [f screens]
+                  (let [w (f args signal)]
+                    (assert w
+                            (str "Should get a weight from " f))
+                    w))
+        average (/ (apply + weights) (count screens))]
+    (assoc signal :weight average)))
 
 (defn simulate
   "Evaluate how a portfolio would perform over historical data.
@@ -42,9 +25,38 @@
    example: (simulate [[sec1 [sig1 sig2]] [sec2 [sig2 sig3]]])
    All inputs are strings which will be used to look up data and functions."
   [symbol-screens args]
-  (evaluate 100000
-    (apply map list (for [[symbol & screens] symbol-screens]
-                      (weight-one symbol screens args)))))
+  (let [signals (for [[s & screens] symbol-screens]
+                  (do
+                    (assert (seq screens)
+                            "Should supply at least one screen")
+                    (assert (every? screen-index screens)
+                            "Should have only valid screen names")
+                    (map #(assoc (clojure.set/rename-keys % {"Adj Close" :price "Date" :date})
+                                 :symbol s)
+                         (get-table s))))
+        symbols (for [[s & screens] symbol-screens]
+                  s)
+        screen-map (reduce (fn [m ss]
+                             (assoc m (first ss) (map screen-index (rest ss))))
+                           {}
+                           symbol-screens)
+        ; index events by date/symbol
+        sparse (reduce (fn update-signal [m signal]
+                         (reduce (fn update-event [m event]
+                                   (update-in m [(event :date)] assoc (event :symbol) event))
+                                 m
+                                 signal))
+                       (sorted-map-by t/after?)
+                       signals)
+        ;TODO: maybe add the date column at the end instead... or not at all
+        table (for [[k v] sparse]
+                (cons k (map v [symbols])))
+        table (pad-rows table)
+        table (map (fn [row]
+                     (cons (first row)
+                           (map (partial calc-weight args screen-map) (rest row))))
+                   table)]
+    (evaluate 100000 table)))
 
 (defn simulate-apy
   "Calculate the annual percentage yeild for a simulation."

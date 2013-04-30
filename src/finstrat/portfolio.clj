@@ -189,10 +189,7 @@
   [p signals]
   ; TODO: nicer way to remap "Adj Close" to :price, "Date" to :date
   ; or do it in data? (price might be a function of bid/ask/open/close)
-  (let [signals (map #(clojure.set/rename-keys % {"Adj Close" :price
-                                                  "Date" :date})
-                     signals)
-        p (dissoc p :comments)
+  (let [p (dissoc p :comments)
         p (reweight p signals)
         p (reduce update-security p signals)
         date ((first signals) :date)]
