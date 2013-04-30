@@ -14,7 +14,7 @@
   (assert (>= (p :cash) spend)
           "Should only buy to liquidity limit")
   (let [price (signal :price)
-        symbol (signal :symbol)
+        s (signal :symbol)
         _ (assert (pos? price)
                   "Should not buy free securities")
         fee (get-in p [:fees :trade])
@@ -27,9 +27,9 @@
     (-> p
       (update-in [:cash] - spend)
       (update-in [:comments] (fnil conj [])
-                 (str "bought " units " " symbol
+                 (str "bought " units " " s
                       " @ " price " for $" spend))
-      (update-in [:security symbol]
+      (update-in [:security s]
                  #(-> %
                     (update-in [:units] + units)
                     (update-in [:cost] + spend))))))
@@ -198,7 +198,7 @@
             "Cash should not be overdrawn")
     ; TODO: should this be handled differently?
     #_(assert (every? #(= date (% :date)) (rest signals))
-            "Signals should all have the same date")
+            (apply str "Signals should all have the same date" (map :date signals)))
     (assoc p
            :date date
            :value (total p signals sale-value))))

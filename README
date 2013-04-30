@@ -25,6 +25,7 @@ Tuning: Fee reduction, error reduction
 
 Does my strategy work on historical data?
 Does an EFT truely cost 0.5% relative to my own portfolio?
+Is solo-benching a good idea?
 Should gold be in my portfolio?
 Are there securities with inverse relationships that both have +ve yield?
 Is buying power related to gold?
@@ -33,7 +34,9 @@ VT BND GLD SPY house?
 Interactive retirement calculator
 How to spend your time/capital
 small business, salary, self-sufficency, corporate, investment
-
+If stocks mostly go up, why not leverage more?
+What type of investor are you?
+    market timer? benchmarker? local currency? purchase horizon?
 
 # Notes
 Runs seem to work well with monthly data
@@ -52,4 +55,13 @@ but I like urls
 use enlive to scrape multpl
 
 Analyze past decisions against a benchmark
+Overlay plot the securities (based to the portfolio)
+
+
+# What do I know?
+Choosing a portfolio is hard
+There are many pursuasive arguments out there
+
+# What don't I know?
+
 

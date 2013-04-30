@@ -93,11 +93,14 @@
           ss (map #(cons % ["hold"]) symbols)
           baseline (map :value (simulate ss args))
           states (map #(assoc %1 :baseline %2) states baseline)
-          header (concat ["Date" "Cash" "Baseline" "Text"] symbols)
+          header (concat ["Date" "Cash" "Baseline" "Text"]
+                         symbols
+                         (map #(str % " price") symbols))
           rows (for [r states]
                  (concat [(r :date) (r :cash) (r :baseline)
                           (clojure.string/join "; " (r :comments))]
-                         (map #(get-in r [:security % :value]) symbols)))]
+                         (map #(get-in r [:security % :value]) symbols)
+                         (map #(get-in r [:security % :price]) symbols)))]
       ;; TODO: too much data for area chart
       (cons header rows))))
 

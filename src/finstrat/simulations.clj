@@ -22,9 +22,9 @@
     (map #(assoc %1 :weight %2) table averages)))
 
 (defn- weight-one
-  [symbol screens args]
+  [s screens args]
   (println "SCREENS" screens)
-  (let [table (get-table symbol)
+  (let [table (get-table s)
         fs (remove nil? (map screen-index screens))
         ; TODO: why does assert say expected: nil?
         _ (assert (seq fs)
@@ -43,8 +43,14 @@
    All inputs are strings which will be used to look up data and functions."
   [symbol-screens args]
   (evaluate 100000
-    (apply map list (for [[symbol & screens] symbol-screens]
-                      (weight-one symbol screens args)))))
+            ;; TODO: insert missing dates (also wtf with UTC?)
+            ;; 1. find the max min date
+            ;; 2. step through recycling missing parts
+            ;; or sorted map inserts
+            ;; or don't evaluate seqences, step through row at a time
+    (reverse
+      (apply map vector (for [[s & screens] symbol-screens]
+                          (reverse (weight-one s screens args)))))))
 
 (defn simulate-apy
   "Calculate the annual percentage yeild for a simulation."
