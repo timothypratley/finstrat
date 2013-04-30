@@ -89,6 +89,9 @@
            "Should only sell positive units")
    (let [s (signal :symbol)
          held (get-in p [:security s :units])
+         fee (get-in p [:fees :trade])
+         _ (assert (pos? units)
+                   "Should sell at least one unit")
          _ (assert (and (<= units held) (pos? held))
                    "Should only sell securities held in the portfolio")
          proceeds (sale-value p signal units)
@@ -186,10 +189,7 @@
   [p signals]
   ; TODO: nicer way to remap "Adj Close" to :price, "Date" to :date
   ; or do it in data? (price might be a function of bid/ask/open/close)
-  (let [signals (map #(clojure.set/rename-keys % {"Adj Close" :price
-                                                  "Date" :date})
-                     signals)
-        p (dissoc p :comments)
+  (let [p (dissoc p :comments)
         p (reweight p signals)
         p (reduce update-security p signals)
         date ((first signals) :date)]
