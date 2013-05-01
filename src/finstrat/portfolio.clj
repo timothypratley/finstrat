@@ -174,7 +174,7 @@
                               :cost 0}))
    :value cash})
 
-(defn- update-security
+(defn- update-security-value
   [p signal]
   (let [price (signal :price)]
     (-> p
@@ -187,11 +187,9 @@
 
 (defn- update
   [p signals]
-  ; TODO: nicer way to remap "Adj Close" to :price, "Date" to :date
-  ; or do it in data? (price might be a function of bid/ask/open/close)
   (let [p (dissoc p :comments)
         p (reweight p signals)
-        p (reduce update-security p signals)
+        p (reduce update-security-value p signals)
         date ((first signals) :date)]
     ;; invariant - TODO: how to do invariant in Clojure (entry, during, exit)
     (assert (not (neg? (p :cash)))
