@@ -25,14 +25,14 @@
     (assert (>= (p :cash) spend)
             "Should not spend more than available")
     (-> p
-      (update-in [:cash] - spend)
-      (update-in [:comments] (fnil conj [])
-                 (str "bought " units " " s
-                      " @ " price " for $" spend))
-      (update-in [:security s]
-                 #(-> %
-                    (update-in [:units] + units)
-                    (update-in [:cost] + spend))))))
+        (update-in [:cash] - spend)
+        (update-in [:comments] (fnil conj [])
+                   (str "bought " units " " s
+                        " @ " price " for $" spend))
+        (update-in [:security s]
+                   #(-> %
+                        (update-in [:units] + units)
+                        (update-in [:cost] + spend))))))
 
 (defn- cost-of
   [security units]
@@ -50,7 +50,7 @@
 
 (defn- raw-value
   ([p signal units]
-    (* units (signal :price)))
+   (* units (signal :price)))
   ([p signal]
    (raw-value p signal
               (get-in p [:security (signal :symbol) :units]))))
@@ -98,19 +98,19 @@
          _ (assert (pos? proceeds)
                    "Cost should not exceed sale")]
      (-> p
-       (update-in [:cash] + proceeds)
-       (update-in [:comments] (fnil conj [])
-                  (str "sold " units " " s
-                       " @ " (signal :price) " for $" proceeds))
-       (update-in [:security s]
-                  #(-> %
-                     (update-in [:units] - units)
-                     (update-in [:cost] - (cost-of % units))))))))
+         (update-in [:cash] + proceeds)
+         (update-in [:comments] (fnil conj [])
+                    (str "sold " units " " s
+                         " @ " (signal :price) " for $" proceeds))
+         (update-in [:security s]
+                    #(-> %
+                         (update-in [:units] - units)
+                         (update-in [:cost] - (cost-of % units))))))))
 
 (defn- ballance
   "Given a portfolio that is only invested in signals,
-   evaluate how many securities should be bought or sold
-   to maintain a relatively equal weighting between them."
+  evaluate how many securities should be bought or sold
+  to maintain a relatively equal weighting between them."
   [p signals]
   (let [raw-total (total p signals raw-value)
         target (/ raw-total (count signals))
@@ -122,9 +122,9 @@
                          (/ (gap signal) target))
         sell? (fn [signal]
                 (and
-                  (< (gap-proportion signal) (- tolerance))
-                  (pos? (sale-value p signal
-                                    (sell-target p signal (- (gap signal)))))))
+                 (< (gap-proportion signal) (- tolerance))
+                 (pos? (sale-value p signal
+                                   (sell-target p signal (- (gap signal)))))))
         sell-list (filter sell? signals)
         trim (fn [p signal]
                (sell p signal
@@ -143,7 +143,7 @@
 
 (defn- reweight
   "Given a portfolio, buy and sell according to signal weights
-   such that the resulting portfolio is prudently invested."
+  such that the resulting portfolio is prudently invested."
   [p signals]
   (let [sorted (sort-by :weight signals)
         best-weight ((last sorted) :weight)
@@ -176,14 +176,14 @@
 
 (defn- update-security
   [p signal]
-  (let [price (signal :price)] 
+  (let [price (signal :price)]
     (-> p
-      (update-in [:security (signal :symbol)]
-                 (fn [security]
-                   (let [units (security :units)]
-                     (-> security
-                       (assoc :price price)
-                       (assoc :value (sale-value p signal)))))))))
+        (update-in [:security (signal :symbol)]
+                   (fn [security]
+                     (let [units (security :units)]
+                       (-> security
+                           (assoc :price price)
+                           (assoc :value (sale-value p signal)))))))))
 
 (defn- update
   [p signals]
@@ -197,16 +197,16 @@
     (assert (not (neg? (p :cash)))
             "Cash should not be overdrawn")
     ; TODO: should this be handled differently?
-    #_(assert (every? #(= date (% :date)) (rest signals))
+    (assert (every? #(= date (% :date)) (rest signals))
             (apply str "Signals should all have the same date" (map :date signals)))
     (assoc p
-           :date date
-           :value (total p signals sale-value))))
+      :date date
+      :value (total p signals sale-value))))
 
 (defn evaluate
   "Evaluate the performance of a portfolio over historical data.
-   stream is a seq of signals.
-   A signal is the price and weight of a security at a point in time."
+  stream is a seq of signals.
+  A signal is the price and weight of a security at a point in time."
   [cash stream]
   (rest (reductions update (portfolio cash (first stream)) stream)))
 
