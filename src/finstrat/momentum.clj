@@ -12,14 +12,14 @@
         cut (and falling (not (neg? weight)))]
     (cond
       run (assoc state
-                 :high p
+                 :high price
                  :weight 1)
       cut (assoc state
-                 :low p
+                 :low price
                  :weight -1)
       :else (assoc state
-                   :low (min low p)
-                   :high (max high p)
+                   :low (min low price)
+                   :high (max high price)
                    :weight weight))))
 
 (defn hold

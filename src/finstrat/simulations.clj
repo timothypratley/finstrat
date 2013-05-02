@@ -5,11 +5,15 @@
         [finstrat.momentum]
         [finstrat.helpers]))
 
-
+; Screen states are associated to the signal.
+; The screens are maintaining their own 'state' which is what we are calculating.
+; We are reducing over new data in the form of future signals...
+; but for convenience the calculated state gets associate to the signal and accumulated
+; so that we have the full history of what occured in the simulation.
 (defn- update-screen-state
   [args signal screen]
   (update-in signal [:screen-state screen]
-             (screen_index screen) signal args))
+             (screen-index screen) signal args))
 
 ;TODO: args should be per screen
 (defn- screen-signal
@@ -21,14 +25,23 @@
                     (assert (state :weight)
                             (str screen " should produce a weight for " signal))
                     (state :weight)))
-        _ (assert (seq weight)
-                  "Should have calculates some weights")
+        _ (assert (seq weights)
+                  "Should have calculated some weights")
         average (/ (apply + weights) (count screens))]
     (assoc signal :weight average)))
 
 (defn- screen-row
-  [[date signals] args]
-  (map (partial screen-signal args) (map signals symbols)))
+  [args current [date signals]]
+  ; if there is a signal missing (dates across time-series sometimes mismatch)
+  ; then maintain the previous signal for this step,
+  ; otherwise copy all the existing screen states to the new signal
+  (let [signals (reduce #(if (nil? (get-in [(%1 :symbol (%2 :symbol))]))
+                           (assoc-in %1 :symbol (%2 :symbol) %2)
+                           %1)
+                        signals
+                        current)
+        signals (reduce #(assoc-in %1 [(%1 :symbol) :screen-state] (get-in [(%2 :symbol) :screen-state]) signals current))]
+    (map (partial screen-signal args) (map #(or %1 %2) signals current))))
 
 (defn- assoc-signal
   [m signal]
@@ -60,20 +73,14 @@
                          (map #(clojure.set/rename-keys % {"Adj Close" :price, "Date" :date}))
                          (map #(assoc % :symbol s)))))
         symbols (map first symbol-screens)
-        screen-map (reduce (fn [m ss]
-                             (assoc m (first ss) (map screen-index (rest ss))))
-                           {}
-                           symbol-screens)
         indexed (index-signals signals)
-        result (reduce screen-row indexed))
-        ;TODO: maybe add the date column at the end instead... or not at all
-        table (for [[k v] sparse]
+        ; calculate the screen weights
+        result (reduce (partial screen-row args) indexed)
+        ; TODO: maybe add the date column at the end instead... or not at all
+        table (for [[k v] result]
                 (cons k (map v [symbols])))
-        table (pad-rows table)
-        table (map (fn [row]
-                     (cons (first row)
-                           (map (partial calc-weight args screen-map) (rest row))))
-                   table)]
+        table (pad-rows table)]
+    ; perform trades according to the weights
     (evaluate 100000 table)))
 
 (defn simulate-apy
