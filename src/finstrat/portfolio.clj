@@ -7,32 +7,36 @@
 ;; Using close to open is possible but introduces an unnecessary
 ;; discontinuity.
 
-(defn- buy
-  [p signal spend]
-  (assert (pos? spend)
+(defn- buy-target
+  [p signal value]
+  (assert (pos? value)
           "Should only buy positive values")
-  (assert (>= (p :cash) spend)
-          "Should only buy to liquidity limit")
+  (assert (pos? (signal :price))
+          "Should only buy when there is a price")
+  (int (/ (- value (get-in p [:fees :trade])) (signal :price))))
+
+(defn- buy
+  [p signal units]
+  (assert (pos? units)
+          "Should only buy positive units")
   (let [price (signal :price)
-        s (signal :symbol)
+        sym (signal :symbol)
         _ (assert (pos? price)
                   "Should not buy free securities")
-        fee (get-in p [:fees :trade])
-        units (int (/ (- spend fee) price))
         _ (assert (pos? units)
                   "Should buy more than zero units")
-        spend (+ (* units price) fee)]
+        spend (+ (* units price) (get-in p [:fees :trade]))]
     (assert (>= (p :cash) spend)
             "Should not spend more than available")
     (-> p
         (update-in [:cash] - spend)
         (update-in [:comments] (fnil conj [])
-                   (str "bought " units " " s
+                   (str "bought " units " " sym
                         " @ " price " for $" spend))
-        (update-in [:security s]
+        (update-in [:security sym]
                    #(-> %
-                        (update-in [:units] + units)
-                        (update-in [:cost] + spend))))))
+                        (update-in [:units] (fnil + 0) units)
+                        (update-in [:cost] (fnil + 0) spend))))))
 
 (defn- cost-of
   [security units]
@@ -46,19 +50,19 @@
         cost (cost-of security units)
         value (* units (signal :price))
         profit (- value cost)]
-    (* profit (p :tax))))
+    (* profit (p :tax-rate))))
 
 (defn- raw-value
   ([p signal units]
-   (* units (signal :price)))
+   (* units (get signal :price 0)))
   ([p signal]
    (raw-value p signal
-              (get-in p [:security (signal :symbol) :units]))))
+              (get-in p [:security (signal :symbol) :units] 0))))
 
 (defn- sale-value
   "Tax adjusted current value of a security as of signal in a portfolio p"
   ([p signal units]
-   (if (pos? units)
+   (if (and units (pos? units))
      (- (raw-value p signal units)
         (tax p signal units)
         (get-in p [:fees :trade]))
@@ -112,14 +116,14 @@
   evaluate how many securities should be bought or sold
   to maintain a relatively equal weighting between them."
   [p signals]
-  (let [raw-total (total p signals raw-value)
-        target (/ raw-total (count signals))
+  (let [target (/ (p :value) (count signals))
         ; only buy and sell if a long way off the target allocation
         tolerance 0.2
         gap (fn [signal]
-              (- target (raw-value p signal)))
+              (- target (sale-value p signal)))
         gap-proportion (fn [signal]
                          (/ (gap signal) target))
+        ;; TODO: simplify the conditionals
         sell? (fn [signal]
                 (and
                  (< (gap-proportion signal) (- tolerance))
@@ -132,11 +136,14 @@
         ;trim securities that are over
         p (reduce trim p sell-list)
         buy? (fn [signal]
-               (> (gap-proportion signal) tolerance))
+                (> (gap-proportion signal) tolerance))
         buy-list (filter buy? signals)
         top-up (fn [p signal]
-                 (buy p signal
-                      (min (p :cash) (gap signal))))
+                 (let [units (buy-target p signal
+                                          (min (p :cash) (gap signal)))]
+                   (if (pos? units)
+                     (buy p signal units)
+                     p)))
         ;top up securities that are under
         p (reduce top-up p buy-list)]
     p))
@@ -148,63 +155,64 @@
   (let [sorted (sort-by :weight signals)
         best-weight ((last sorted) :weight)
         ; http://www.investopedia.com/terms/l/long.asp
-        long? #(>= (% :weight) best-weight 0.1)
-        longs (take-while long? (reverse sorted))
+        long? (fn [sig]
+                (>= (sig :weight) best-weight 0.1))
+        long-sigs (take-while long? (reverse sorted))
         ; TODO: try ballancing into only the newest/mid/oldest outperforms
         ; http://www.investopedia.com/terms/s/short.asp
-        ;worst ((first sorted) :weight)
-        ;short? #(<= (% :weight) worst 0.1)
-        ;shorts (take-while short? sorted)
-        sells (remove (set longs) signals)
-        sells (filter #(pos? (get-in p [:security (% :symbol) :units])) sells)
+        ;worst-weight ((first sorted) :weight)
+        ;short? (fn [sig]
+        ;         (<= (sig :weight) worst-weight 0.1)
+        ;short-sigs (take-while short? sorted)
+        sells (remove (set long-sigs) signals)
+        sells (filter (fn [sig]
+                        (pos? (get-in p [:security (sig :symbol) :units] 0)))
+                      sells)
         p (reduce sell p sells)
-        p (if (empty? longs)
+        p (if (empty? long-sigs)
             p
-            (ballance p longs))]
+            (ballance p long-sigs))]
     p))
 
-(defn- portfolio
+(defn portfolio
   "Create a portfolio"
-  [cash signals]
+  [cash]
   {:cash cash
-   :tax 0.2
+   :tax-rate 0.2
    :fees {:trade 9}
-   :security (zipmap (map :symbol signals)
-                     (repeat {:units 0
-                              :cost 0}))
    :value cash})
 
 (defn- update-security-value
   [p signal]
-  (let [price (signal :price)]
-    (-> p
-        (update-in [:security (signal :symbol)]
-                   (fn [security]
-                     (let [units (security :units)]
-                       (-> security
-                           (assoc :price price)
-                           (assoc :value (sale-value p signal)))))))))
+  (update-in p [:security (signal :symbol)]
+             (fn [security]
+               (-> security
+                   (assoc :price (signal :price))
+                   (assoc :value (sale-value p signal))))))
 
 (defn- update
-  [p signals]
-  (let [p (dissoc p :comments)
+  [p [date signals]]
+  ;; TODO: destructure vals or don't use :symbol, or something else
+  (let [signals (vals signals)
+        p (dissoc p :comments)
         p (reweight p signals)
         p (reduce update-security-value p signals)
-        date ((first signals) :date)]
+        dates (map :date signals)]
     ;; invariant - TODO: how to do invariant in Clojure (entry, during, exit)
     (assert (not (neg? (p :cash)))
             "Cash should not be overdrawn")
-    ; TODO: should this be handled differently?
-    (assert (every? #(= date (% :date)) (rest signals))
-            (apply str "Signals should all have the same date" (map :date signals)))
+    ; TODO: or should I just use the max?
+    (assert (apply = date dates)
+            "Signals should all have the same date")
     (assoc p
-      :date date
+      :date (first dates)
       :value (total p signals sale-value))))
 
 (defn evaluate
   "Evaluate the performance of a portfolio over historical data.
   stream is a seq of signals.
   A signal is the price and weight of a security at a point in time."
-  [cash stream]
-  (rest (reductions update (portfolio cash (first stream)) stream)))
-
+  [p stream]
+          ; TODO sim seems to have worked
+          ; cash changes value, but not shown in graph...
+  (rest (reductions update p stream)))

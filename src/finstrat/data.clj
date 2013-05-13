@@ -20,15 +20,20 @@
     (map (partial bind-columns header) data)))))
 
 (defn get-table
-  [symbol]
+  [sym]
   ; TODO: is there a way to query only the Date and Adj Close?
-  (let [response (client/get "http://ichart.finance.yahoo.com/table.csv"
-                             {:throw-entire-message? true
-                              :query-params {:s symbol
-                                             :ignore ".csv"}})
-        csv (parse-csv (response :body))]
-    (reverse (map #(assoc % :symbol symbol) (bind csv)))))
-;; caching for testing purposes, you will need to restart every day :)
+  (->> (client/get "http://ichart.finance.yahoo.com/table.csv"
+                   {:throw-entire-message? true
+                    :query-params {:s sym
+                                   :ignore ".csv"}})
+       :body
+       parse-csv
+       bind
+       (map #(assoc % :symbol sym))
+       (map #(clojure.set/rename-keys
+              % {"Adj Close" :price
+                 "Date" :date}))))
+;; TODO: caching for testing purposes, you will need to restart every day :)
 (def get-table (memoize get-table))
 
 (defn realsap

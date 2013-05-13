@@ -43,7 +43,7 @@
 
 (comment defn csv
   [filename content]
-  (assoc-in 
+  (assoc-in
     (content-type "text/csv"
       (str (doto (java.io.StringWriter.) (write-csv content))))
     [:headers "Content-Disposition"]
@@ -79,7 +79,7 @@
         (for [b bs]
           (for [c cs]
             ;; TODO: match sim with symbols... pass in JSON descriptor
-            (simulate-apy (map #(cons % screens) symbols) [a b c])))))))
+            (simulate-apy (map #(cons % screens) symbols))))))))
 
 (defpage "/sim/:screens/:symbols/:a/:b/:c"
   {:keys [screens symbols a b c]}
@@ -88,10 +88,10 @@
           screens (clojure.string/split screens #"_")
           ss (map #(cons % screens) symbols)
           args (map parse-number [a b c])
-          states (simulate ss args)
+          states (simulate ss)
           _ (println (last states))
           ss (map #(cons % ["hold"]) symbols)
-          baseline (map :value (simulate ss args))
+          baseline (map :value (simulate ss))
           states (map #(assoc %1 :baseline %2) states baseline)
           header (concat ["Date" "Cash" "Baseline" "Text"]
                          symbols

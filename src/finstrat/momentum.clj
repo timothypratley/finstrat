@@ -3,9 +3,9 @@
 (defn momentum
   [[tolerance period _] state signal]
   (let [price (signal :price)
-        high (or (state :high) price)
-        low (or (state :low) price)
-        weight (or (state :weight) 0)
+        high (or (:high state) price)
+        low (or (:low state) price)
+        weight (or (:weight state) 0)
         rising (> price (+ low (* low tolerance 0.01)))
         run (and rising (not (pos? weight)))
         falling (< price (- high (* high tolerance 0.01)))

@@ -11,3 +11,6 @@
     (server/start port {:mode mode
                         :ns 'finstrat})))
 
+;; dev repl
+;;(require 'noir.server)
+;;(noir.server/start 8080 {:ns 'finstrat})

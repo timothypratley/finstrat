@@ -10,20 +10,20 @@
         signal {:symbol "X"
                 :price 10}]
     (testing "Simple"
-      (let [p (#'finstrat.portfolio/buy p signal 10)
+      (let [p (#'finstrat.portfolio/buy p signal 1)
             units (get-in p [:security "X" :units])]
         (is (= units 1))
         (is (= (p :cash) 10))))
     (testing "Fees"
       (let [p (assoc-in p [:fees :trade] 9)
-            p (#'finstrat.portfolio/buy p signal 20)
+            p (#'finstrat.portfolio/buy p signal 1)
             units (get-in p [:security "X" :units])]
         (is (= units 1))
         (is (= (p :cash) 1))))))
 
 (deftest test-sell
   (let [p {:cash 0
-           :tax 0
+           :tax-rate 0
            :fees {:trade 0}
            :security {"X" {:units 1
                            :cost 10}}}
@@ -33,7 +33,7 @@
       (let [p (#'finstrat.portfolio/sell p signal 1)]
         (is (= (p :cash) 11))))
     (testing "Taxed"
-      (let [p (assoc p :tax 0.2)
+      (let [p (assoc p :tax-rate 0.2)
             p (#'finstrat.portfolio/sell p signal)]
         (is (= (p :cash) 10.8))))
     (testing "Fee"
@@ -42,7 +42,7 @@
         (is (= (p :cash) 2))))))
 
 (deftest test-tax
-  (let [p {:tax 0.2
+  (let [p {:tax-rate 0.2
            :security {"X" {:units 1
                            :cost 10}}}
         signal {:symbol "X"
@@ -51,7 +51,7 @@
 
 (deftest test-reweight
   (let [p {:cash 100
-           :tax 0.2
+           :tax-rate 0.2
            :fees {:trade 9}
            :security {"X" {:units 1000
                            :cost 10}
