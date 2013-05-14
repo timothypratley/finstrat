@@ -15,7 +15,7 @@
   [signal screen]
   (update-in signal [:screen-state screen]
              ; TODO: args need to be threaded through per screen
-             (partial (screen-index screen) [1 1 1])
+             (partial (screen-index screen) [15 15 15])
              signal))
 
 ;TODO: args should be per screen
@@ -104,9 +104,8 @@
         symbols (map first symbol-screens)
         indexed (index-signals signals)
         ; calculate the screen weights
-        rows (map (partial screen-step screens-for)
-                  (cons (first indexed) indexed)
-                  indexed)
+        ;; TODO: do I really need to take 'rest', seems to avoid zero weight
+        rows (rest (reductions (partial screen-step screens-for) indexed))
         ; TODO: maybe add the date column at the end instead... or not at all
         ;table (for [[k v] rows]
          ;       (cons k (map v [symbols])))

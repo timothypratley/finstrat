@@ -1,4 +1,4 @@
-(ns finstrat.test.services
+(ns finstrat.test.services_tests
   (:use [clojure.test]))
 
 (deftest test-sim
