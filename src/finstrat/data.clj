@@ -3,21 +3,20 @@
             [incanter.excel :as i]
             [net.cgrand.enlive-html :as html])
   (:use [finstrat.helpers]
-        ;[stockings.core]
         [clojure-csv.core]))
 
 (defn bind-columns
   [header row]
   (zipmap header
-          (cons (parse-date (first row)) (map parse-number (rest row)))))
+          (cons (parse-date (first row))
+                (map parse-number (rest row)))))
 
 (defn bind
   [csv]
-  ;; TODO: Yes this is very slow (but cached) - reflecting
-  ;; TODO: does doall make any difference?
-  (time (doall (let [header (first csv)
+  ;; TODO: this is slow
+  (let [header (first csv)
         data (rest csv)]
-    (map (partial bind-columns header) data)))))
+    (map (partial bind-columns header) data)))
 
 (defn get-table
   [sym]
@@ -32,9 +31,11 @@
        (map #(assoc % :symbol sym))
        (map #(clojure.set/rename-keys
               % {"Adj Close" :price
-                 "Date" :date}))))
+                 "Date" :date}))
+       doall))
 ;; TODO: caching for testing purposes, you will need to restart every day :)
 (def get-table (memoize get-table))
+;eg: (time (get-table "^GSPC"))
 
 (defn realsap
   []
