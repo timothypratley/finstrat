@@ -1,5 +1,6 @@
 (ns finstrat.helpers
-  (:require [clj-time.coerce :as coerce]))
+  (:use [clj-time.coerce]
+        [clj-time.format]))
 
 (defn rangef
   "Returns a sequence of n numbers from start to end inclusive."
@@ -32,10 +33,9 @@
   [d]
   (/ (Math/round (* 100.0 d)) 100.0))
 
-(defn parse-date [date-string]
-  (let [groups (.parse (com.joestelmach.natty.Parser.) date-string)]
-    (if-not (empty? groups)
-      (coerce/from-date (first (.getDates ^com.joestelmach.natty.DateGroup (first groups)))))))
+(let [custom-formatter (formatter "yyyy-MM-dd")]
+  (defn parse-date [date-string]
+    (to-long (parse custom-formatter date-string))))
 
 (defn parse-number
   "Reads a number from a string. Returns nil if not a number."

@@ -26,3 +26,5 @@
            (simulate-apy [["F" "momentum"]]))
          #_(quick-bench
            (simulate-apy [["F" "momentum"]])))
+
+(run-tests)
