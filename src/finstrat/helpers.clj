@@ -43,6 +43,14 @@
   (if (re-find #"^-?\d+\.?\d*([Ee]\+\d+|[Ee]-\d+|[Ee]\d+)?$" (.trim s))
     (read-string s)))
 
+(defn parse-money
+  [^String s]
+  (-> s
+      (clojure.string/replace "$" "")
+      (clojure.string/replace "," "")
+      parse-number))
+;; (parse-money "$4,123.55")
+
 (defn- update-keys
   [m [f & kvs]]
   (reduce (fn [m kv] (update-in m kv f))

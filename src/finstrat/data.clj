@@ -3,7 +3,6 @@
             [incanter.excel :as i]
             [net.cgrand.enlive-html :as html])
   (:use [finstrat.helpers]
-        ;[stockings.core]
         [clojure-csv.core]))
 
 (defn bind-columns
@@ -40,10 +39,6 @@
   []
   (bind (parse-csv (slurp "realsap.csv"))))
 
-(comment stockings defn yhoo
-  []
-  (get-hisotrical-quotes "YHOO" (LocalDate. 2011 4 1) (LocalDate. 2011 5 1)))
-
 
 (defn get-multpl
   []
@@ -70,3 +65,36 @@
   (i/read-xls " http://www.ise.com/isee#"))
 
 
+(defn- parse-fs [fs ds]
+  (for [[f d] (map vector fs ds)
+        :when f]
+    (f d)))
+
+(defn- parse-table
+  [table fs]
+  {:headings (map html/text (html/select table [:tr :> :th]))
+   :data (for [tr (html/select table [:tr])
+               :let [tds (html/select tr [:td])
+                     tds (map html/text tds)]
+               :when (seq tds)]
+           (if (seq fs)
+             (parse-fs fs tds)
+             tds))})
+
+(defn scrape-table
+  "Scrapes data from a HTML table at url with CSS selector.
+  fs are the parsing functions to use per column, nil indicates skip."
+  [url selector fs]
+  (parse-table
+   (html/select
+    (html/html-resource (java.net.URL. url))
+    selector)
+   fs))
+
+(defn house-value
+  "Look up the historic tax assessor valuations for a seattle real estate parcel"
+  [parcel]
+  (scrape-table
+   (str "http://info.kingcounty.gov/Assessor/eRealProperty/Dashboard.aspx?ParcelNbr=" parcel)
+   [:table#kingcounty_gov_cphContent_GridViewDBTaxRoll]
+   [parse-date nil nil nil parse-money]))

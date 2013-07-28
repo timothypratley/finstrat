@@ -8,14 +8,17 @@
 ;; discontinuity.
 
 (defn- buy-target
+  "Find the number of units that can be purchased"
   [p signal value]
   (assert (pos? value)
           "Should only buy positive values")
   (assert (pos? (signal :price))
           "Should only buy when there is a price")
-  (int (/ (- value (get-in p [:fees :trade])) (signal :price))))
+  (int (/ (- value (get-in p [:fees :trade]))
+          (signal :price))))
 
 (defn- buy
+  "Returns an updated portfolio p with a purchase"
   [p signal units]
   (assert (pos? units)
           "Should only buy positive units")
@@ -45,6 +48,7 @@
     (* units cost-per-unit)))
 
 (defn- tax
+  "The amount of tax that will be paid upon selling units of a security"
   [p signal units]
   (let [security (get-in p [:security (signal :symbol)])
         cost (cost-of security units)
@@ -76,6 +80,7 @@
   (apply + (p :cash) (map (partial valuation p) signals)))
 
 (defn- sell-target
+  "Find the number of units to sell"
   [p signal value]
   (assert (pos? value)
           "Should only sell positive values")
@@ -85,6 +90,7 @@
 
 ; TODO: tax is only paid in April if not withheld
 (defn- sell
+  "Returns an updated portfolio p with a sale"
   ([p signal]
    (sell p signal
          (get-in p [:security (signal :symbol) :units])))
@@ -175,7 +181,7 @@
     p))
 
 (defn portfolio
-  "Create a portfolio"
+  "Creates a new portfolio"
   [cash]
   {:cash cash
    :tax-rate 0.2
@@ -191,6 +197,9 @@
                    (assoc :value (sale-value p signal))))))
 
 (defn- update
+  "The update step in a timeseries evaluation.
+  Portfolio p is updated by buying or selling securities according
+  to weights which have been previously calculated by screen functions."
   [p [date signals]]
   ;; TODO: destructure vals or don't use :symbol, or something else
   (let [signals (vals signals)
