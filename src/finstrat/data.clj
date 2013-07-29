@@ -5,18 +5,19 @@
   (:use [finstrat.helpers]
         [clojure-csv.core]))
 
-(defn bind-columns
+(def parse-date (date-parser "yyyy-MM-dd"))
+(defn- bind-columns
   [header row]
   (zipmap header
-          (cons (parse-date (first row))
-                (map parse-number (rest row)))))
+          (cons (parse-date (first row)) (map parse-number (rest row)))))
 
-(defn bind
+(defn- bind
   [csv]
-  ;; TODO: this is slow
-  (let [header (first csv)
+  ;; TODO: Yes this is very slow (but cached) - reflecting
+  ;; TODO: does doall make any difference?
+  (time (doall (let [header (first csv)
         data (rest csv)]
-    (map (partial bind-columns header) data)))
+    (map (partial bind-columns header) data)))))
 
 (defn get-table
   [sym]
@@ -31,32 +32,15 @@
        (map #(assoc % :symbol sym))
        (map #(clojure.set/rename-keys
               % {"Adj Close" :price
-                 "Date" :date}))
-       doall))
+                 "Date" :date}))))
 ;; TODO: caching for testing purposes, you will need to restart every day :)
 (def get-table (memoize get-table))
-;eg: (time (get-table "^GSPC"))
 
 (defn realsap
+  ;; todo cache files
   []
   (bind (parse-csv (slurp "realsap.csv"))))
 
-
-(defn get-multpl
-  []
-  ;(let [;response (client/get "http://www.multpl.com/table"
-        ;                {:query-params {:f "m"}})
-  (let [data (map html/text
-               (html/select
-                 (html/html-resource (java.net.URL. "http://www.multpl.com/table?f=m"))
-                 [:table#datatable :tr :td]))
-        pairs (partition 2 data)
-        ms (map zipmap (repeat [:date :pe]) pairs)
-        ;; TODO: use update-many instead
-        ms (map #(update-in % [:date] parse-date) ms)
-        ;; TODO: the latest value is marked estimate and does not parse!
-        ms (map #(update-in % [:pe] parse-number) ms)]
-    ms))
 
 (defn get-aaii-sentiment
   []
@@ -72,16 +56,22 @@
         :when f]
     (f d)))
 
-(defn- parse-table
-  [table fs]
+(def contents (partial map (comp first :content)))
+
+(defn- parse-table2
+  [table]
   {:headings (map html/text (html/select table [:tr :> :th]))
    :data (for [tr (html/select table [:tr])
-               :let [tds (html/select tr [:td])
-                     tds (map html/text tds)]
-               :when (seq tds)]
-           (if (seq fs)
-             (parse-fs fs tds)
-             tds))})
+               :let [row (contents (html/select tr [:td]))]
+               :when (seq row)]
+             row)})
+
+(defn- parse-table
+  [table fs]
+  (for [tr (html/select table [:tr])
+        :let [row (contents (html/select tr [:td]))]
+        :when (seq row)]
+    (parse-fs fs row)))
 
 (defn scrape-table
   "Scrapes data from a HTML table at url with CSS selector.
@@ -93,10 +83,25 @@
     selector)
    fs))
 
+(defn multpl []
+  (scrape-table
+   "http://www.multpl.com/table?f=m"
+   [:table#datatable]
+   [(date-parser "MMM dd, yyyy") parse-number]))
+
+(multpl)
+
 (defn house-value
   "Look up the historic tax assessor valuations for a seattle real estate parcel"
   [parcel]
   (scrape-table
    (str "http://info.kingcounty.gov/Assessor/eRealProperty/Dashboard.aspx?ParcelNbr=" parcel)
    [:table#kingcounty_gov_cphContent_GridViewDBTaxRoll]
-   [parse-date nil nil nil parse-money]))
+   [(date-parser "yyyy") nil nil nil nil nil nil parse-money]))
+
+(defn changes
+  [s]
+  (map / (rest s) s))
+
+(changes (map last (multpl)))
+

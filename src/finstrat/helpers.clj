@@ -28,14 +28,16 @@
   [m & more]
   (reduce update-keys m more))
 
-;; TODO: this is really aweful, trying to avoid floating point precision
+;; TODO: this is really aweful
 (defn two-dec
+  "Avoid over precision when sending JSON"
   [d]
   (/ (Math/round (* 100.0 d)) 100.0))
 
-(let [custom-formatter (formatter "yyyy-MM-dd")]
-  (defn parse-date [date-string]
-    (to-long (parse custom-formatter date-string))))
+(defn date-parser
+  "Create a date parsing function for a format"
+  [format-string]
+  (comp to-long (partial parse (formatter format-string))))
 
 (defn parse-number
   "Reads a number from a string. Returns nil if not a number."
