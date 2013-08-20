@@ -8,4 +8,4 @@
          (println (take 5 (get-table "F"))))
 
 (deftest test-multpl
-  (println "MULTPL" (take 20 (get-multpl))))
+  (println "MULTPL" (take 20 (multpl))))

@@ -5,8 +5,9 @@
 
 (multpl)
 
-(def h (house-value xxxx))
-(def dates (map first h))
+;; use tax parcel number as input
+(def h (house-value 1))
+(def dates (map long (map first h)))
 
 ;; TODO from 1996 dates are 2 year gapped!
 (def c (changes (map double (reverse (map last h)))))

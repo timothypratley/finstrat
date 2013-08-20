@@ -1,5 +1,5 @@
 (ns finstrat.data
-  (:require [clj-http.client :as client]
+  (:require [clj-http.lite.client :as client]
             [incanter.excel :as i]
             [net.cgrand.enlive-html :as html])
   (:use [finstrat.helpers]

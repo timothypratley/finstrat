@@ -1,6 +1,15 @@
 (ns finstrat.helpers
   (:use [clj-time.coerce]
-        [clj-time.format]))
+        [clj-time.format]
+        [clj-time.core]))
+
+
+(defn readable-date
+  [date]
+  (unparse (if (= (year date) (year (now)))
+                    (formatter "MMM dd")
+                    (formatter "MMM dd yyyy"))
+                    date))
 
 (defn rangef
   "Returns a sequence of n numbers from start to end inclusive."
@@ -37,7 +46,7 @@
 (defn date-parser
   "Create a date parsing function for a format"
   [format-string]
-  (comp to-long (partial parse (formatter format-string))))
+  #(parse (formatter format-string) %))
 
 (defn parse-number
   "Reads a number from a string. Returns nil if not a number."

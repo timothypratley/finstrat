@@ -1,16 +1,23 @@
 (ns finstrat.server
-  (:require [noir.server :as server]
-            [finstrat.pages]
-            [finstrat.services]))
+  (:require [compojure.core :refer :all]
+            [compojure.route :refer :all]
+            [noir.util.middleware :refer :all]
+            [finstrat.pages :refer :all]
+            [finstrat.services :refer :all]))
 
-(def handler (server/gen-handler {:ns 'finstrat}))
 
-(defn -main [& m]
-  (let [mode (keyword (or (first m) :dev))
-        port (Integer. ^String (get (System/getenv) "PORT" "8080"))]
-    (server/start port {:mode mode
-                        :ns 'finstrat})))
+(def app-routes
+  [(GET "/" [] (home))
+   (GET "/chart" [] (chart))
+   (GET "/about" [] (about))
+   (GET "/sim/:screens/:symbols/:astart/:aend/:acount/:bstart/:bend/:bcount/:cstart/:cend/:ccount"
+        [screens symbols astart aend acount bstart bend bcount cstart cend ccount]
+        (sim screens symbols astart aend acount bstart bend bcount cstart cend ccount))
+   (GET "/sim/:screens/:symbols/:a/:b/:c"
+        [screens symbols a b c]
+        (sim screens symbols a b c))
+   (resources "/")
+   (not-found "Not found")])
 
-;; dev repl
-;;(require 'noir.server)
-;;(noir.server/start 8080 {:ns 'finstrat})
+(def handler
+  (app-handler app-routes))

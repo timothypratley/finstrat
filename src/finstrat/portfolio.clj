@@ -122,7 +122,8 @@
   evaluate how many securities should be bought or sold
   to maintain a relatively equal weighting between them."
   [p signals]
-  (let [target (/ (p :value) (count signals))
+  (let [value (total p signals sale-value)
+        target (/ value (count signals))
         ; only buy and sell if a long way off the target allocation
         tolerance 0.2
         gap (fn [signal]

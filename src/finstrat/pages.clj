@@ -1,13 +1,11 @@
 (ns finstrat.pages
-  (:require [noir.session :as session]
-            [noir.response :as response])
-  (:use [noir.core]
-        [hiccup.core]
-        [hiccup.element]
-        [hiccup.form]
-        [hiccup.page]))
+  (:require [hiccup.core :refer :all]
+            [hiccup.element :refer :all]
+            [hiccup.form :refer :all]
+            [hiccup.page :refer :all]))
 
-(defpage "/" []
+
+(defn home []
   (html5
     [:head
      ; When run on an intranet, IE defaults to compatibility
@@ -22,7 +20,7 @@
              :type "image/x-icon"}]
      (include-css "//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css")
      (include-css "/css/finstrat.css")]
-    [:body 
+    [:body
      [:header.navbar
       [:div.navbar-inner
        [:a.brand {:href "#/"} [:strong "S"]]
@@ -50,7 +48,7 @@
      (include-js "/js/charts.js")
      (include-js "/js/finstrat.js")]))
 
-(defpage "/chart" []
+(defn chart []
   (html
     [:form {:ng-submit "submit()"
             :novalidate true
@@ -63,7 +61,7 @@
            ;TODO: why why why? I just want it big
            :style "width: 1000px; height: 500px"}]))
 
-(defpage "/mathbox" []
+(defn mathbox []
   (html
     [:form {:ng-submit "submit()"
             :novalidate true
@@ -83,11 +81,11 @@
            ; workaround to avoid mathbox overlay for labels position issue
            :style "width:600px;height:600px;position:relative"}]))
 
-(defpage "/about" []
+(defn about []
   (html
     [:div "Todo"]))
 
-(defpage "/histogram" []
+(defn histogram []
   (html
     [:div {:chart "dist"}]
     [:style "
@@ -108,7 +106,7 @@
 "]
     [:div {:histogram "general"
            :style "font: 10px sans-serif"}]))
-                  
-(defpage "/links/:symbol" []
+
+(defn links []
   (html
     [:a {:href "http://ycharts.com/companies/F/dashboard"} "dashboard"]))

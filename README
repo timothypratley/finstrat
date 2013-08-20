@@ -6,7 +6,7 @@ and formulating portfolio management models.
 
 ## Usage
 
-lein run
+lein ring server
 
 
 ## License

@@ -1,17 +1,19 @@
 (defproject finstrat "1.0.0-SNAPSHOT"
   :description "Technical Analysis"
-  :dependencies [[org.clojure/clojure "1.4.0"]
-                 [noir "1.3.0"]
-                 [incanter/incanter-core "1.4.1"]
-                 [incanter/incanter-excel "1.4.1"]
-                 [incanter/incanter-charts "1.4.1"]
-                 [clj-http-lite "0.1.0"]
-                 [clj-time "0.4.5"]
+  :dependencies [[org.clojure/clojure "1.5.1"]
+                 [compojure "1.1.5"]
+                 [lib-noir "0.6.8"]
+                 [ring-server "0.2.7"]
+                 [hiccup "1.0.4"]
+                 [incanter/incanter-core "1.5.2"]
+                 [incanter/incanter-excel "1.5.2"]
+                 [incanter/incanter-charts "1.5.2"]
+                 [clj-http-lite "0.2.0"]
+                 [clj-time "0.6.0"]
                  [clojure-csv/clojure-csv "2.0.0-alpha2"]
                  [enlive "1.1.1"]
-                 [criterium "0.3.1"]]
-  :dev-dependencies [[lein-ring "0.7.5"]]
+                 [criterium "0.4.1"]]
+  :plugins [[lein-ring "0.8.6"]]
   :warn-on-reflection true
-  :ring {:handler finstrat.server/handler}
-  :main finstrat.server)
+  :ring {:handler finstrat.server/handler})
 
