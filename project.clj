@@ -13,7 +13,10 @@
                  [clojure-csv/clojure-csv "2.0.0-alpha2"]
                  [enlive "1.1.1"]
                  [criterium "0.4.1"]]
-  :plugins [[lein-ring "0.8.6"]]
-  :warn-on-reflection true
+  :plugins [[codox "0.6.4"]
+            ;[lein-autodoc "0.9.0"]
+            ;[lein-marginalia "0.7.1"]
+            [lein-ring "0.8.6"]]
+  ;:warn-on-reflection true
   :ring {:handler finstrat.server/handler})
 
